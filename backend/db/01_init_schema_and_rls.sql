@@ -1,0 +1,217 @@
+-- PanenDesa Database Schema & RLS Policies
+-- This file contains DDL for all tables and Row-Level Security policies
+-- Execute this in Supabase SQL Editor
+
+-- ============================================
+-- TABLES
+-- ============================================
+
+-- Users & Roles
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    nama VARCHAR(100) NOT NULL,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('petani','petugas_kopdes','pembeli','admin')),
+    desa_id INTEGER,
+    email VARCHAR(100) UNIQUE,
+    password_hash TEXT NOT NULL,
+    -- Skor konsistensi individual, hanya relevan untuk role 'petani'
+    skor_konsistensi DECIMAL(5,2) DEFAULT 100.00,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- Desa
+CREATE TABLE desa (
+    id SERIAL PRIMARY KEY,
+    nama_desa VARCHAR(100) NOT NULL,
+    latitude DECIMAL(9,6),
+    longitude DECIMAL(9,6),
+    -- Agregat (rata-rata tertimbang) dari skor_konsistensi petani di desa ini
+    skor_konsistensi DECIMAL(5,2) DEFAULT 100.00
+);
+
+-- Kopdes (satu per desa, fase 1)
+CREATE TABLE kopdes (
+    id SERIAL PRIMARY KEY,
+    desa_id INTEGER REFERENCES desa(id),
+    nama_kopdes VARCHAR(100) NOT NULL,
+    -- Fee layanan Kopdes, persentase tetap
+    fee_persen DECIMAL(5,2) NOT NULL DEFAULT 0 CHECK (fee_persen >= 0 AND fee_persen <= 100),
+    aktif BOOLEAN DEFAULT true
+);
+
+ALTER TABLE users ADD CONSTRAINT fk_users_desa FOREIGN KEY (desa_id) REFERENCES desa(id);
+
+-- Komoditas
+CREATE TABLE komoditas (
+    id SERIAL PRIMARY KEY,
+    nama_komoditas VARCHAR(50) NOT NULL,
+    satuan VARCHAR(10) DEFAULT 'kg'
+);
+
+-- Laporan Stok Estimasi (sebelum panen)
+CREATE TABLE stok_estimasi (
+    id SERIAL PRIMARY KEY,
+    petani_id INTEGER REFERENCES users(id),
+    komoditas_id INTEGER REFERENCES komoditas(id),
+    jumlah_kg DECIMAL(10,2) NOT NULL,
+    tanggal_target_panen DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'menunggu_panen',
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- Catatan Intake & Grading (setelah panen, di kopdes)
+CREATE TABLE intake_grading (
+    id SERIAL PRIMARY KEY,
+    stok_estimasi_id INTEGER REFERENCES stok_estimasi(id),
+    petugas_id INTEGER REFERENCES users(id),
+    foto_url TEXT NOT NULL,
+    skor_warna DECIMAL(3,2),
+    skor_ukuran DECIMAL(3,2),
+    persen_cacat DECIMAL(5,2),
+    grade CHAR(1) CHECK (grade IN ('A','B','C')),
+    -- true jika petugas mengoverride grade hasil Gemini Vision secara manual
+    grade_override_manual BOOLEAN DEFAULT false,
+    berat_aktual_kg DECIMAL(10,2) NOT NULL,
+    kejanggalan_terdeteksi BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- Order dari Pembeli
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    pembeli_id INTEGER REFERENCES users(id),
+    komoditas_id INTEGER REFERENCES komoditas(id),
+    kopdes_id INTEGER REFERENCES kopdes(id),
+    jumlah_diminta_kg DECIMAL(10,2) NOT NULL,
+    status VARCHAR(30) DEFAULT 'dikonfirmasi_sementara',
+    harga_final_per_kg DECIMAL(10,2),
+    -- Snapshot fee_persen Kopdes SAAT harga dikonfirmasi
+    fee_kopdes_persen_terpakai DECIMAL(5,2),
+    harga_terkunci BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+-- Alokasi Order lintas Desa (Smart Split) - Many-to-Many
+CREATE TABLE order_allocation (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    desa_id INTEGER REFERENCES desa(id),
+    jumlah_dialokasikan_kg DECIMAL(10,2) NOT NULL,
+    urutan_prioritas INTEGER,
+    -- Skor prioritas hasil formula Smart Split saat alokasi ini dibuat
+    skor_prioritas DECIMAL(6,4)
+);
+
+-- Distribusi Fair-Share ke tiap Petani
+CREATE TABLE fair_share_distribution (
+    id SERIAL PRIMARY KEY,
+    order_id INTEGER REFERENCES orders(id),
+    petani_id INTEGER REFERENCES users(id),
+    intake_grading_id INTEGER REFERENCES intake_grading(id),
+    kontribusi_kg DECIMAL(10,2) NOT NULL,
+    pengali_grade DECIMAL(3,2) NOT NULL,
+    -- jumlah_diterima sudah dihitung SETELAH fee_kopdes_persen_terpakai dipotong
+    jumlah_diterima DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- Harga Acuan Pasar (referensi, bukan harga final)
+CREATE TABLE harga_acuan (
+    id SERIAL PRIMARY KEY,
+    komoditas_id INTEGER REFERENCES komoditas(id),
+    harga_referensi_per_kg DECIMAL(10,2) NOT NULL,
+    sumber VARCHAR(100),
+    tanggal DATE DEFAULT CURRENT_DATE
+);
+
+-- Benchmark Margin Tengkulak (Tier 2 — Economic Impact Calculator)
+CREATE TABLE benchmark_margin_tengkulak (
+    id SERIAL PRIMARY KEY,
+    komoditas_id INTEGER REFERENCES komoditas(id),
+    desa_id INTEGER REFERENCES desa(id),
+    margin_persen_min DECIMAL(5,2) NOT NULL,
+    margin_persen_max DECIMAL(5,2) NOT NULL,
+    sumber_referensi TEXT NOT NULL,
+    catatan TEXT,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- Audit Log (admin, sampling audit acak & jejak perubahan sensitif)
+CREATE TABLE audit_log (
+    id SERIAL PRIMARY KEY,
+    admin_id INTEGER REFERENCES users(id),
+    tabel_terkait VARCHAR(50) NOT NULL,
+    record_id INTEGER NOT NULL,
+    aksi VARCHAR(30) NOT NULL,
+    catatan TEXT,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- ============================================
+-- INDEX
+-- ============================================
+CREATE INDEX idx_users_desa ON users(desa_id);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_stok_estimasi_petani ON stok_estimasi(petani_id);
+CREATE INDEX idx_stok_estimasi_status ON stok_estimasi(status);
+CREATE INDEX idx_intake_grading_petugas ON intake_grading(petugas_id);
+CREATE INDEX idx_intake_grading_stok_estimasi ON intake_grading(stok_estimasi_id);
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_komoditas ON orders(komoditas_id);
+CREATE INDEX idx_orders_kopdes ON orders(kopdes_id);
+CREATE INDEX idx_orders_pembeli ON orders(pembeli_id);
+CREATE INDEX idx_order_allocation_order ON order_allocation(order_id);
+CREATE INDEX idx_order_allocation_desa ON order_allocation(desa_id);
+CREATE INDEX idx_fair_share_petani ON fair_share_distribution(petani_id);
+CREATE INDEX idx_fair_share_order ON fair_share_distribution(order_id);
+CREATE INDEX idx_benchmark_komoditas_desa ON benchmark_margin_tengkulak(komoditas_id, desa_id);
+
+-- ============================================
+-- TRIGGER: Proteksi harga_terkunci
+-- ============================================
+CREATE OR REPLACE FUNCTION prevent_harga_final_update() RETURNS TRIGGER AS $$
+BEGIN
+    IF OLD.harga_terkunci = true AND (
+        NEW.harga_final_per_kg IS DISTINCT FROM OLD.harga_final_per_kg
+        OR NEW.fee_kopdes_persen_terpakai IS DISTINCT FROM OLD.fee_kopdes_persen_terpakai
+    ) THEN
+        RAISE EXCEPTION 'harga_final_per_kg dan fee_kopdes_persen_terpakai tidak bisa diubah setelah harga_terkunci = true';
+    END IF;
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_prevent_harga_final_update
+BEFORE UPDATE ON orders
+FOR EACH ROW EXECUTE FUNCTION prevent_harga_final_update();
+
+-- ============================================
+-- ROW LEVEL SECURITY (RLS)
+-- ============================================
+-- NOTE: RLS policies are disabled for now because:
+-- 1. This project uses custom JWT authentication (not Supabase Auth)
+-- 2. auth.uid() returns UUID but our users.id is INTEGER
+-- 3. Authorization will be handled in backend middleware instead
+--
+-- To enable RLS later, either:
+-- - Add auth_id UUID column to users table and map to Supabase Auth
+-- - Or use a custom RLS function that reads from a session table
+-- ============================================
+
+-- RLS is NOT enabled - authorization handled in backend middleware
+-- If you want to enable RLS, uncomment the lines below and adjust policies
+
+-- ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE stok_estimasi ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE intake_grading ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE order_allocation ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE fair_share_distribution ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE benchmark_margin_tengkulak ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE desa ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE kopdes ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE komoditas ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE harga_acuan ENABLE ROW LEVEL SECURITY;
