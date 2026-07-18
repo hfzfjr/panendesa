@@ -204,6 +204,15 @@ FOR EACH ROW EXECUTE FUNCTION prevent_harga_final_update();
 
 ## Formula Algoritma (referensi untuk `/lib`)
 
+### Threshold Deteksi Kejanggalan Intake
+```
+kejanggalan_terdeteksi = true JIKA ABS(berat_aktual_kg - estimasi_kg) / estimasi_kg > 0.30
+```
+Threshold 30% ini beda dari toleransi ±15% Smart Split (lihat `user_flow.md` Alur 3) —
+dua konsep berbeda: 30% ini untuk menandai satu laporan intake individual sebagai
+mencurigakan (butuh review admin), sedangkan ±15% untuk memutuskan apakah kapasitas
+desa cukup memenuhi satu order pembeli. Jangan disamakan atau digabung logic-nya.
+
 ### Skor Konsistensi Petani
 Dihitung dari N transaksi terakhir (disarankan N=10), dipicu ulang setiap ada `intake_grading` baru untuk petani tsb:
 
