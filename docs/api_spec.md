@@ -13,11 +13,12 @@ Response sukses: `{ "success": true, "data": { "token": string, "role": string, 
 ### POST /api/stok-estimasi
 Role: `petani`
 Request: `{ "komoditas_id": number, "jumlah_kg": number, "tanggal_target_panen": "YYYY-MM-DD" }`
-Response: `{ "success": true, "data": { "id": number, "status": "menunggu_panen" } }`
+Validasi: `tanggal_target_panen` harus format `YYYY-MM-DD` valid dan tidak boleh tanggal lampau.
+Response: `{ "success": true, "data": { "id": number, "petani_id": number, "komoditas_id": number, "jumlah_kg": number, "tanggal_target_panen": string, "status": "menunggu_panen", "created_at": string } }` — mengembalikan seluruh row yang baru dibuat, bukan cuma `id` dan `status`, supaya frontend tidak perlu GET tambahan setelah submit.
 
 ### GET /api/stok-estimasi/:petani_id
-Role: `petani`, `admin`
-Response: daftar laporan stok milik petani tsb.
+Role: `petani` (HANYA data milik sendiri — akses ke `petani_id` lain ditolak 403), `petugas_kopdes` (HANYA petani di desa yang sama, dicek via `users.desa_id`), `admin` (semua). Role `pembeli` ditolak 403 — endpoint ini tidak untuk pembeli, mereka hanya lihat data agregat via `/api/capacity`.
+Response: `{ "success": true, "data": [...] }` — daftar laporan stok milik petani tsb.
 
 ## Intake & Grading (Kopdes)
 

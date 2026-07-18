@@ -8,6 +8,7 @@ declare global {
       user?: {
         user_id: number;
         role: string;
+        desa_id?: number;
         email?: string;
       };
     }

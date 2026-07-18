@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { supabaseAdmin } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 const router = Router();
 
@@ -25,7 +25,7 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 
     // Query user from database using admin client (bypass RLS)
-    const { data: user, error } = await supabaseAdmin
+    const { data: user, error } = await supabase
       .from('users')
       .select('*')
       .eq('email', email)

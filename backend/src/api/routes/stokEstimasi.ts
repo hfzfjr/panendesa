@@ -13,21 +13,42 @@ router.post('/', verifyToken, requireRole(['petani']), async (req: Request, res:
     if (!komoditas_id || typeof komoditas_id !== 'number') {
       return res.status(400).json({
         success: false,
-        error: 'komoditas_id is required and must be a number'
+        error: 'komoditas_id wajib diisi dan harus berupa angka'
       });
     }
 
     if (!jumlah_kg || typeof jumlah_kg !== 'number' || jumlah_kg <= 0) {
       return res.status(400).json({
         success: false,
-        error: 'jumlah_kg is required and must be greater than 0'
+        error: 'jumlah_kg wajib diisi dan harus lebih dari 0'
       });
     }
 
     if (!tanggal_target_panen) {
       return res.status(400).json({
         success: false,
-        error: 'tanggal_target_panen is required'
+        error: 'tanggal_target_panen wajib diisi'
+      });
+    }
+
+    // Validate date format (YYYY-MM-DD)
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(tanggal_target_panen)) {
+      return res.status(400).json({
+        success: false,
+        error: 'tanggal_target_panen harus dalam format YYYY-MM-DD'
+      });
+    }
+
+    // Validate date is not in the past
+    const targetDate = new Date(tanggal_target_panen);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (targetDate < today) {
+      return res.status(400).json({
+        success: false,
+        error: 'tanggal_target_panen tidak boleh tanggal yang sudah lewat'
       });
     }
 
@@ -51,7 +72,7 @@ router.post('/', verifyToken, requireRole(['petani']), async (req: Request, res:
       console.error('Database error:', error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to create stock estimation'
+        error: 'Gagal membuat estimasi stok'
       });
     }
 
@@ -63,7 +84,7 @@ router.post('/', verifyToken, requireRole(['petani']), async (req: Request, res:
     console.error('Server error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Terjadi kesalahan server'
     });
   }
 });
@@ -84,7 +105,7 @@ router.get('/', verifyToken, requireRole(['petani']), async (req: Request, res: 
       console.error('Database error:', error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch stock estimations'
+        error: 'Gagal mengambil estimasi stok'
       });
     }
 
@@ -96,7 +117,94 @@ router.get('/', verifyToken, requireRole(['petani']), async (req: Request, res: 
     console.error('Server error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// GET /api/stok-estimasi/:petani_id - Get stock estimations for specific petani
+router.get('/:petani_id', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const petaniIdParam = Array.isArray(req.params.petani_id) ? req.params.petani_id[0] : req.params.petani_id;
+    const targetPetaniId = parseInt(petaniIdParam);
+    const userRole = req.user!.role;
+    const userId = req.user!.user_id;
+    const userDesaId = req.user!.desa_id;
+
+    if (isNaN(targetPetaniId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'petani_id tidak valid'
+      });
+    }
+
+    // Role-based access control
+    if (userRole === 'pembeli') {
+      return res.status(403).json({
+        success: false,
+        error: 'Pembeli tidak memiliki akses ke endpoint ini'
+      });
+    }
+
+    if (userRole === 'petani') {
+      // Petani hanya boleh akses data miliknya sendiri
+      if (targetPetaniId !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke data petani lain'
+        });
+      }
+    }
+
+    if (userRole === 'petugas_kopdes') {
+      // Petugas kopdes hanya boleh akses petani di desa yang sama
+      const { data: targetPetani, error: petaniError } = await supabase
+        .from('users')
+        .select('desa_id')
+        .eq('id', targetPetaniId)
+        .single();
+
+      if (petaniError || !targetPetani) {
+        return res.status(404).json({
+          success: false,
+          error: 'Petani tidak ditemukan'
+        });
+      }
+
+      if (targetPetani.desa_id !== userDesaId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke petani di desa lain'
+        });
+      }
+    }
+
+    // Admin boleh akses semua data, tidak perlu validasi tambahan
+
+    // Fetch stock estimations for the target petani
+    const { data, error } = await supabase
+      .from('stok_estimasi')
+      .select('*')
+      .eq('petani_id', targetPetaniId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Database error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Gagal mengambil estimasi stok'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Server error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Terjadi kesalahan server'
     });
   }
 });
