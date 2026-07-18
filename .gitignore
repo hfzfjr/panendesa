@@ -41,8 +41,3 @@ coverage/
 # Misc
 .cache/
 .temp/
-
-.devin
-docs
-AGENTS.md
-CLAUDE.md
