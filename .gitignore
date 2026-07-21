@@ -45,3 +45,4 @@ coverage/
 # Postman
 backend/.postman/
 backend/postman/
+backend/test

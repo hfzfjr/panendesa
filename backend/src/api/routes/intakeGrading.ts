@@ -1,8 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { supabase } from '../../lib/supabase';
 import { verifyToken, requireRole } from '../middlewares/authMiddleware';
 import { updateTrustScore } from '../../lib/trust-score-engine';
+import { analyzeProductImage } from '../../lib/gemini-vision';
+import { intakeGradingRateLimit } from '../middlewares/rateLimitMiddleware';
 
 // Extend Express Request type to include file from multer
 declare global {
@@ -19,18 +21,52 @@ const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept only image files
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedMimes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('File harus berupa gambar (JPEG, PNG, atau WebP)'));
+    }
   }
 });
+
+// Error handling middleware for multer
+const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        error: 'Ukuran file terlalu besar. Maksimal 5MB.'
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      error: err.message
+    });
+  }
+  if (err) {
+    return res.status(400).json({
+      success: false,
+      error: err.message
+    });
+  }
+  next();
+};
 
 // POST /api/intake-grading - Create intake grading record (Petugas Kopdes only)
 router.post('/',
   verifyToken,
   requireRole(['petugas_kopdes']),
+  intakeGradingRateLimit,
   upload.single('foto'),
+  handleMulterError,
   async (req: Request, res: Response) => {
     try {
-      const { stok_estimasi_id, berat_aktual_kg, grade_override_manual, grade, skor_warna, skor_ukuran, persen_cacat } = req.body;
+      const { stok_estimasi_id, berat_aktual_kg, grade_override_manual } = req.body;
       const petugas_id = req.user!.user_id;
 
       // Validation
@@ -55,11 +91,11 @@ router.post('/',
         });
       }
 
-      // Placeholder validation for manual grade fields (will be replaced by Gemini Vision)
-      if (grade && !['A', 'B', 'C'].includes(grade)) {
+      // Validate grade_override_manual if provided
+      if (grade_override_manual && !['A', 'B', 'C'].includes(grade_override_manual)) {
         return res.status(400).json({
           success: false,
-          error: 'grade harus berupa A, B, atau C'
+          error: 'grade_override_manual harus berupa A, B, atau C'
         });
       }
 
@@ -78,6 +114,46 @@ router.post('/',
         });
       }
 
+      // Call Gemini Vision API for image analysis
+      console.log('[Intake Grading] Calling Gemini Vision API...');
+      const geminiResult = await analyzeProductImage(req.file.buffer, req.file.mimetype);
+
+      let finalGrade: string;
+      let isOverrideManual: boolean;
+      let finalSkorWarna: number | null;
+      let finalSkorUkuran: number | null;
+      let finalPersenCacat: number | null;
+
+      if (grade_override_manual) {
+        // Manual override takes priority
+        finalGrade = grade_override_manual;
+        isOverrideManual = true;
+        // Still save Gemini scores if available for reference
+        if (geminiResult.berhasil) {
+          finalSkorWarna = geminiResult.skor_warna || null;
+          finalSkorUkuran = geminiResult.skor_ukuran || null;
+          finalPersenCacat = geminiResult.persen_cacat || null;
+        } else {
+          finalSkorWarna = null;
+          finalSkorUkuran = null;
+          finalPersenCacat = null;
+        }
+      } else if (geminiResult.berhasil) {
+        // Use Gemini grade
+        finalGrade = geminiResult.grade_usulan || 'B';
+        isOverrideManual = false;
+        finalSkorWarna = geminiResult.skor_warna || null;
+        finalSkorUkuran = geminiResult.skor_ukuran || null;
+        finalPersenCacat = geminiResult.persen_cacat || null;
+      } else {
+        // Gemini failed and no manual override - request manual grade
+        return res.status(400).json({
+          success: false,
+          error: 'Penilaian otomatis gagal. Silakan kirim ulang dengan mengisi grade_override_manual secara manual.',
+          gemini_error: geminiResult.error
+        });
+      }
+
       // Upload foto to Supabase Storage (placeholder - for now just use a dummy URL)
       // TODO: Implement proper file upload to Supabase Storage in next phase
       const foto_url = `https://placeholder.com/foto/${Date.now()}.jpg`;
@@ -89,19 +165,6 @@ router.post('/',
       const selisihPersen = Math.abs(estimasiKg - aktualKg) / estimasiKg * 100;
       const kejanggalan_terdeteksi = selisihPersen > 30;
 
-      // Determine final grade
-      let finalGrade: string;
-      let isOverrideManual: boolean;
-
-      if (grade_override_manual) {
-        finalGrade = grade_override_manual;
-        isOverrideManual = true;
-      } else {
-        // Use placeholder grade from body (will be replaced by Gemini Vision)
-        finalGrade = grade || 'B'; // Default to B if not provided
-        isOverrideManual = false;
-      }
-
       // Insert to intake_grading table
       const { data, error } = await supabase
         .from('intake_grading')
@@ -109,9 +172,9 @@ router.post('/',
           stok_estimasi_id: stokEstimasiId,
           petugas_id,
           foto_url,
-          skor_warna: skor_warna ? parseFloat(skor_warna) : null,
-          skor_ukuran: skor_ukuran ? parseFloat(skor_ukuran) : null,
-          persen_cacat: persen_cacat ? parseFloat(persen_cacat) : null,
+          skor_warna: finalSkorWarna,
+          skor_ukuran: finalSkorUkuran,
+          persen_cacat: finalPersenCacat,
           grade: finalGrade,
           grade_override_manual: isOverrideManual,
           berat_aktual_kg: aktualKg,
