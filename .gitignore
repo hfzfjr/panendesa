@@ -41,3 +41,9 @@ coverage/
 # Misc
 .cache/
 .temp/
+
+# AI Documents
+*.md
+!README.md
+docs/
+dokumen/
