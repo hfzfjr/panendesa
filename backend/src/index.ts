@@ -6,6 +6,8 @@ import cors from 'cors';
 import stokEstimasiRouter from './api/routes/stokEstimasi';
 import authRouter from './api/routes/auth';
 import intakeGradingRouter from './api/routes/intakeGrading';
+import trustScoreRouter from './api/routes/trustScore';
+import capacityRouter from './api/routes/capacity';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +31,8 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/auth', authRouter);
 app.use('/api/stok-estimasi', stokEstimasiRouter);
 app.use('/api/intake-grading', intakeGradingRouter);
+app.use('/api/trust-score', trustScoreRouter);
+app.use('/api/capacity', capacityRouter);
 
 // Start server
 app.listen(PORT, () => {

@@ -22,13 +22,13 @@ export interface CapacityData {
 export async function getDesaCapacity(desa_id: number): Promise<CapacityData> {
   try {
     // 1. Hitung Kapasitas Estimasi (dari stok_estimasi)
-    // Hanya hitung laporan dengan status 'menunggu_panen' atau 'tervalidasi'
-    // Join dengan users untuk filter per desa
+    // Hitung SEMUA stok_estimasi milik petani di desa tersebut (tanpa filter status)
+    // Catatan: Kolom status saat ini hanya di-set ke 'menunggu_panen' saat create,
+    // tidak ada logic yang mengubah status setelah itu (verifikasi dari codebase)
     const { data: estimasiData, error: estimasiError } = await supabase
       .from('stok_estimasi')
       .select('jumlah_kg, petani_id, users!inner(desa_id)')
-      .eq('users.desa_id', desa_id)
-      .in('status', ['menunggu_panen', 'tervalidasi']);
+      .eq('users.desa_id', desa_id);
 
     if (estimasiError) throw estimasiError;
 
@@ -37,11 +37,10 @@ export async function getDesaCapacity(desa_id: number): Promise<CapacityData> {
 
     // 2. Hitung Kapasitas Tervalidasi (dari intake_grading)
     // Kapasitas tervalidasi adalah sumber kebenaran untuk alokasi order
-    // Join dengan stok_estimasi untuk filter status, lalu join dengan users untuk filter desa
+    // Join dengan stok_estimasi untuk filter desa (via users)
     const { data: intakeData, error: intakeError } = await supabase
       .from('intake_grading')
-      .select('berat_aktual_kg, stok_estimasi!inner(status, petani_id, users!inner(desa_id))')
-      .eq('stok_estimasi.status', 'tervalidasi')
+      .select('berat_aktual_kg, stok_estimasi!inner(petani_id, users!inner(desa_id))')
       .eq('stok_estimasi.users.desa_id', desa_id);
 
     if (intakeError) throw intakeError;

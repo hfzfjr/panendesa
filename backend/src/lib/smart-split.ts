@@ -98,10 +98,10 @@ export async function hitungPrioritasDesa(
     // Ambil kapasitas tervalidasi desa
     const capacity = await getDesaCapacity(desa_id);
 
-    // Hitung skor prioritas
-    const skorPrioritas = 
+    // Hitung skor prioritas (ikuti formula di database_schema.md)
+    const skorPrioritas =
       (config.bobot_jarak * (1 / (jarakKm || 1))) + // Hindari pembagian dengan 0
-      (config.bobot_konsistensi * (desaData.skor_konsistensi / 100)); // Normalisasi ke 0-1
+      (config.bobot_konsistensi * desaData.skor_konsistensi);
 
     return {
       desa_id: desaData.id,
@@ -133,7 +133,7 @@ function hitungJarak(
   const R = 6371; // Radius bumi dalam km
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-  const a = 
+  const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);

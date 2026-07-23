@@ -8,7 +8,7 @@ declare global {
       user?: {
         user_id: number;
         role: string;
-        desa_id?: number;
+        desa_id?: number | null;
         email?: string;
       };
     }
@@ -39,6 +39,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction): vo
     const decoded = jwt.verify(token, JWT_SECRET) as {
       user_id: number;
       role: string;
+      desa_id?: number | null;
       email?: string;
     };
 
