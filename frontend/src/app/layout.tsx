@@ -22,7 +22,7 @@ export default function RootLayout({
       lang="id"
       className={`${inter.variable} h-full antialiased font-sans`}
     >
-      <body className="min-h-full flex flex-col bg-[var(--color-neutral-100)] text-[var(--color-neutral-900)]">{children}</body>
+      <body className="min-h-full flex flex-col bg-(--color-neutral-100) text-(--color-neutral-900)">{children}</body>
     </html>
   );
 }

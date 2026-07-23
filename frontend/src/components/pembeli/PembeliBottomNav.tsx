@@ -9,33 +9,32 @@ export function PembeliBottomNav() {
   const pathname = usePathname();
 
   const navItems = [
-    { name: "Beranda", href: "/dashboard/pembeli", icon: Home },
-    { name: "Pasar", href: "/dashboard/pembeli/marketplace", icon: ShoppingBag },
-    { name: "Pesanan", href: "/dashboard/pembeli/orders", icon: Package },
-    { name: "Profil", href: "/dashboard/pembeli/profile", icon: User },
+    { name: "Beranda", href: "/pembeli", icon: Home },
+    { name: "Pasar", href: "/pembeli/marketplace", icon: ShoppingBag },
+    { name: "Pesanan", href: "/pembeli/orders", icon: Package },
+    { name: "Profil", href: "/pembeli/profile", icon: User },
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 z-50 pb-safe md:hidden">
+    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 z-50 pb-4 md:hidden">
       <div className="flex justify-around items-center h-16 px-2">
         {navItems.map((item) => {
           // Exactly matching href for Beranda, and prefix matching for others
-          const isActive = item.href === "/dashboard/pembeli" 
-            ? pathname === item.href 
+          const isActive = item.href === "/pembeli"
+            ? pathname === item.href
             : pathname.startsWith(item.href) && item.href !== "#";
-            
+
           const Icon = item.icon;
-          
+
           return (
-            <Link 
-              key={item.name} 
+            <Link
+              key={item.name}
               href={item.href}
-              className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${
-                isActive ? "text-[var(--color-primary-dark)]" : "text-gray-400 hover:text-gray-600"
-              }`}
+              className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive ? "text-primary-dark" : "text-gray-400 hover:text-gray-600"
+                }`}
             >
-              <Icon className={`w-6 h-6 ${isActive ? "stroke-[2.5px]" : "stroke-2"}`} />
-              <span className={`text-[10px] ${isActive ? "font-bold" : "font-medium"}`}>
+              <Icon className={`w-6 h-6 ${isActive ? "stroke-[2.5]" : "stroke-2"}`} />
+              <span className={`text-xs ${isActive ? "font-bold" : "font-medium"}`}>
                 {item.name}
               </span>
             </Link>

@@ -3,12 +3,12 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Sprout, 
-  ClipboardCheck, 
-  ShoppingCart, 
-  Truck, 
+import {
+  LayoutDashboard,
+  Sprout,
+  ClipboardCheck,
+  ShoppingCart,
+  Truck,
   History,
   Headphones,
   Settings,
@@ -19,18 +19,18 @@ export function PetaniSidebar() {
   const pathname = usePathname();
 
   const mainLinks = [
-    { name: "Halaman Utama", href: "/dashboard/petani", icon: LayoutDashboard },
-    { name: "Tanaman Saya", href: "/dashboard/petani/tanaman", icon: Sprout },
-    { name: "Buku Tabungan", href: "/dashboard/petani/pendapatan", icon: ClipboardCheck },
-    { name: "Pesanan Masuk", href: "/dashboard/petani/pesanan", icon: ShoppingCart },
-    { name: "Pengiriman", href: "/dashboard/petani/logistik", icon: Truck },
-    { name: "Riwayat", href: "/dashboard/petani/audit", icon: History },
+    { name: "Halaman Utama", href: "/petani", icon: LayoutDashboard },
+    { name: "Tanaman Saya", href: "/petani/tanaman", icon: Sprout },
+    { name: "Buku Tabungan", href: "/petani/pendapatan", icon: ClipboardCheck },
+    { name: "Pesanan Masuk", href: "/petani/pesanan", icon: ShoppingCart },
+    { name: "Pengiriman", href: "/petani/logistik", icon: Truck },
+    { name: "Riwayat", href: "/petani/audit", icon: History },
   ];
 
   const bottomLinks = [
-    { name: "Bantuan Teknis", href: "/dashboard/petani/bantuan-teknis", icon: Headphones, isButton: true },
-    { name: "Pengaturan", href: "/dashboard/petani/pengaturan", icon: Settings },
-    { name: "Bantuan", href: "/dashboard/petani/bantuan", icon: HelpCircle },
+    { name: "Bantuan Teknis", href: "/petani/bantuan-teknis", icon: Headphones, isButton: true },
+    { name: "Pengaturan", href: "/petani/pengaturan", icon: Settings },
+    { name: "Bantuan", href: "/petani/bantuan", icon: HelpCircle },
   ];
 
   return (
@@ -47,11 +47,10 @@ export function PetaniSidebar() {
             <Link
               key={link.name}
               href={link.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${
-                isActive
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${isActive
                   ? "bg-[#1B5E20] text-white shadow-sm"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-              }`}
+                }`}
             >
               <link.icon className="w-5 h-5" />
               <span>{link.name}</span>

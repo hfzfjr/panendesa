@@ -14,12 +14,12 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles = 'inline-flex items-center justify-center font-semibold transition-all duration-200 rounded-[var(--radius-md)] focus:outline-none hover:-translate-y-0.5 active:scale-95 hover:shadow-md';
-  
+
   const variants = {
-    primary: 'bg-[var(--color-primary)] text-white hover:opacity-90',
-    accent: 'bg-[var(--color-accent)] text-[var(--color-neutral-900)] hover:brightness-95',
-    outline: 'border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white',
-    ghost: 'bg-transparent text-[var(--color-neutral-900)] hover:bg-[var(--color-neutral-100)]',
+    primary: 'bg-(--color-primary) text-white hover:opacity-90',
+    accent: 'bg-(--color-accent) text-(--color-neutral-900) hover:brightness-95',
+    outline: 'border border-(--color-primary) text-(--color-primary) hover:bg-(--color-primary) hover:text-white',
+    ghost: 'bg-transparent text-(--color-neutral-900) hover:bg-(--color-neutral-100)',
     custom: ''
   };
 

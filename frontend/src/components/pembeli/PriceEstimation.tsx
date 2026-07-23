@@ -13,12 +13,12 @@ export function PriceEstimation() {
     <section className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-16 border-t border-gray-200">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-[#1A1C19] mb-2">Estimasi Harga</h2>
-          <p className="text-[var(--color-neutral-600)] text-sm">
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">Estimasi Harga</h2>
+          <p className="text-neutral-600 text-sm">
             Rerata harga komoditas minggu ini di tingkat desa.
           </p>
         </div>
-        <div className="bg-[#EAEBE6] px-4 py-2 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-2">
+        <div className="bg-neutral-100 px-4 py-2 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-2">
           <span className="text-red-500 font-bold">*</span>
           Estimasi berbasis riset, <strong>bukan</strong> data transaksi real-time. <strong>Sumber:</strong> Riset Pasar Komoditas 2023
         </div>
@@ -35,29 +35,29 @@ export function PriceEstimation() {
                 {item.change}
               </div>
             </div>
-            
+
             <div className="mt-4 z-10 relative">
               <h3 className="text-sm font-bold text-gray-600 mb-1">{item.name}</h3>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-[var(--color-primary-dark)]">Rp {item.price}</span>
+                <span className="text-2xl font-bold text-primary-dark">Rp {item.price}</span>
                 <span className="text-xs text-gray-500 font-medium">{item.unit}</span>
               </div>
             </div>
 
             {/* Simple CSS Curve Mockup */}
             <div className="absolute bottom-0 left-0 right-0 h-16 opacity-30 group-hover:opacity-50 transition-opacity">
-               <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full">
-                  <path 
-                    d={item.isUp ? "M0,30 Q25,10 50,20 T100,5 L100,30 L0,30 Z" : "M0,5 Q25,15 50,10 T100,25 L100,30 L0,30 Z"} 
-                    fill={item.isUp ? "var(--color-primary)" : "var(--color-danger)"} 
-                  />
-                  <path 
-                    d={item.isUp ? "M0,30 Q25,10 50,20 T100,5" : "M0,5 Q25,15 50,10 T100,25"} 
-                    fill="none" 
-                    stroke={item.isUp ? "var(--color-primary-dark)" : "var(--color-danger)"} 
-                    strokeWidth="2" 
-                  />
-               </svg>
+              <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-full">
+                <path
+                  d={item.isUp ? "M0,30 Q25,10 50,20 T100,5 L100,30 L0,30 Z" : "M0,5 Q25,15 50,10 T100,25 L100,30 L0,30 Z"}
+                  fill={item.isUp ? "var(--color-primary)" : "var(--color-danger)"}
+                />
+                <path
+                  d={item.isUp ? "M0,30 Q25,10 50,20 T100,5" : "M0,5 Q25,15 50,10 T100,25"}
+                  fill="none"
+                  stroke={item.isUp ? "var(--color-primary-dark)" : "var(--color-danger)"}
+                  strokeWidth="2"
+                />
+              </svg>
             </div>
           </div>
         ))}
