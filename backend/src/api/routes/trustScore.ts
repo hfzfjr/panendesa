@@ -84,12 +84,11 @@ router.get('/petani/:petani_id',
       }
 
       // Ambil riwayat transaksi (10 terakhir) - query sama dengan updateTrustScore
+      // Mulai dari intake_grading (hanya yang punya intake), bukan dari stok_estimasi
       const { data: stokEstimasiList, error: stokError } = await supabase
         .from('stok_estimasi')
-        .select('id, jumlah_kg, created_at')
-        .eq('petani_id', petaniIdNum)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .select('id, jumlah_kg')
+        .eq('petani_id', petaniIdNum);
 
       if (stokError) {
         return res.status(500).json({
@@ -98,14 +97,27 @@ router.get('/petani/:petani_id',
         });
       }
 
-      const stokIds = stokEstimasiList?.map(s => s.id) || [];
+      if (!stokEstimasiList || stokEstimasiList.length === 0) {
+        return res.json({
+          success: true,
+          data: {
+            skor_konsistensi: petaniData.skor_konsistensi,
+            jumlah_transaksi_dihitung: 0,
+            riwayat: []
+          }
+        });
+      }
 
-      // Ambil intake_grading untuk stok_estimasi ini
+      const stokIds = stokEstimasiList.map(s => s.id);
+      const stokMap = new Map(stokEstimasiList.map(s => [s.id, s.jumlah_kg]));
+
+      // Ambil intake_grading untuk stok_estimasi ini, order by created_at desc, limit 10
       const { data: intakeList, error: intakeError } = await supabase
         .from('intake_grading')
-        .select('stok_estimasi_id, berat_aktual_kg, created_at')
+        .select('stok_estimasi_id, berat_aktual_kg')
         .in('stok_estimasi_id', stokIds)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10);
 
       if (intakeError) {
         return res.status(500).json({
@@ -114,33 +126,27 @@ router.get('/petani/:petani_id',
         });
       }
 
-      // Map stok_estimasi_id ke data intake
-      const intakeMap = new Map(
-        (intakeList || []).map((item: any) => [item.stok_estimasi_id, item])
-      );
-
-      // Gabungkan data dan hitung skor_transaksi
-      const riwayat = (stokEstimasiList || []).map(stok => {
-        const intake = intakeMap.get(stok.id);
-        const estimasiKg = stok.jumlah_kg;
-        const realisasiKg = intake?.berat_aktual_kg || null;
-        const skorTransaksi = realisasiKg !== null ? hitungSkorTransaksi(estimasiKg, realisasiKg) : null;
+      // Hanya include entri yang punya intake_grading (realisasi tidak null)
+      const riwayat = (intakeList || []).map((intake: any) => {
+        const estimasiKg = stokMap.get(intake.stok_estimasi_id) || 0;
+        const realisasiKg = intake.berat_aktual_kg;
+        const skorTransaksi = hitungSkorTransaksi(estimasiKg, realisasiKg);
 
         return {
-          stok_estimasi_id: stok.id,
+          stok_estimasi_id: intake.stok_estimasi_id,
           estimasi_kg: estimasiKg,
           realisasi_kg: realisasiKg,
-          skor_transaksi: skorTransaksi,
-          tanggal: intake?.created_at || stok.created_at
+          skor_transaksi: skorTransaksi
         };
       });
+
+      const jumlah_transaksi_dihitung = riwayat.length;
 
       return res.json({
         success: true,
         data: {
-          petani_id: petaniData.id,
-          nama: petaniData.nama,
           skor_konsistensi: petaniData.skor_konsistensi,
+          jumlah_transaksi_dihitung,
           riwayat
         }
       });
@@ -151,8 +157,7 @@ router.get('/petani/:petani_id',
         error: 'Terjadi kesalahan server'
       });
     }
-  }
-);
+  });
 
 /**
  * GET /api/trust-score/desa/:desa_id
@@ -163,8 +168,6 @@ router.get('/desa/:desa_id',
   async (req: Request, res: Response) => {
     try {
       const { desa_id } = req.params;
-      const userRole = req.user?.role;
-      const userDesaId = req.user?.desa_id;
 
       // Validasi: desa_id harus string
       if (Array.isArray(desa_id)) {
@@ -176,28 +179,10 @@ router.get('/desa/:desa_id',
 
       const desaIdNum = parseInt(desa_id);
 
-      // Validasi: petugas_kopdes hanya bisa akses desa miliknya sendiri
-      if (userRole === 'petugas_kopdes') {
-        if (!userDesaId) {
-          return res.status(403).json({
-            success: false,
-            error: 'Petugas kopdes harus memiliki desa_id yang valid'
-          });
-        }
-
-        if (desaIdNum !== userDesaId) {
-          return res.status(403).json({
-            success: false,
-            error: 'Petugas kopdes hanya bisa melihat desa miliknya sendiri'
-          });
-        }
-      }
-
-      // Validasi: hanya role tertentu yang boleh akses
-      if (!['admin', 'petugas_kopdes'].includes(userRole as string)) {
-        return res.status(403).json({
+      if (isNaN(desaIdNum)) {
+        return res.status(400).json({
           success: false,
-          error: 'Role tidak memiliki akses ke endpoint ini'
+          error: 'desa_id harus berupa angka'
         });
       }
 
@@ -232,10 +217,8 @@ router.get('/desa/:desa_id',
       return res.json({
         success: true,
         data: {
-          desa_id: desaData.id,
-          nama_desa: desaData.nama_desa,
-          skor_konsistensi: desaData.skor_konsistensi,
-          jumlah_petani: count || 0
+          skor_konsistensi_desa: desaData.skor_konsistensi,
+          jumlah_petani_aktif: count || 0
         }
       });
     } catch (error) {

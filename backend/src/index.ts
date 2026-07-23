@@ -9,6 +9,9 @@ import intakeGradingRouter from './api/routes/intakeGrading';
 import trustScoreRouter from './api/routes/trustScore';
 import capacityRouter from './api/routes/capacity';
 import ordersRouter from './api/routes/orders';
+import fairShareRouter from './api/routes/fairShare';
+import auditLogRouter from './api/routes/auditLog';
+import economicImpactRouter from './api/routes/economicImpact';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -35,6 +38,9 @@ app.use('/api/intake-grading', intakeGradingRouter);
 app.use('/api/trust-score', trustScoreRouter);
 app.use('/api/capacity', capacityRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/fair-share', fairShareRouter);
+app.use('/api/audit-log', auditLogRouter);
+app.use('/api/economic-impact', economicImpactRouter);
 
 // Start server
 app.listen(PORT, () => {

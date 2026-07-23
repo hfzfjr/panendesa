@@ -5,6 +5,7 @@ import { verifyToken, requireRole } from '../middlewares/authMiddleware';
 import { updateTrustScore } from '../../lib/trust-score-engine';
 import { analyzeProductImage } from '../../lib/gemini-vision';
 import { intakeGradingRateLimit } from '../middlewares/rateLimitMiddleware';
+import { validateOrderCapacity } from '../../lib/order-validator';
 
 // Extend Express Request type to include file from multer
 declare global {
@@ -198,6 +199,83 @@ router.post('/',
       } catch (err) {
         console.error('Error updating trust score (non-blocking):', err);
         // Sengaja tidak return/throw di sini -- kegagalan update skor TIDAK BOLEH
+        // menggagalkan response utama insert intake_grading
+      }
+
+      // Trigger order validation (non-blocking)
+      console.log(`[Intake Grading] Triggering order validation for intake on stok_estimasi_id: ${stokEstimasiId}`);
+      try {
+        // 1. Ambil desa_id dan komoditas_id dari stok_estimasi
+        const { data: stokEstimasiFull, error: stokFullError } = await supabase
+          .from('stok_estimasi')
+          .select('petani_id, komoditas_id, users!inner(desa_id)')
+          .eq('id', stokEstimasiId)
+          .single();
+
+        if (stokFullError || !stokEstimasiFull) {
+          console.error('[Intake Grading] Error fetching stok_estimasi full data for order validation:', stokFullError);
+        } else {
+          const petaniDesaId = (stokEstimasiFull as any).users?.desa_id;
+          const komoditasId = stokEstimasiFull.komoditas_id;
+
+          // 2. Cari kopdes WHERE desa_id = petaniDesaId AND aktif = true
+          const { data: kopdesList, error: kopdesError } = await supabase
+            .from('kopdes')
+            .select('id')
+            .eq('desa_id', petaniDesaId)
+            .eq('aktif', true);
+
+          if (kopdesError || !kopdesList || kopdesList.length === 0) {
+            console.log('[Intake Grading] No active kopdes found for desa, skip order validation');
+          } else {
+            const kopdesIds = kopdesList.map(k => k.id);
+
+            // 3. Cari orders WHERE status = 'dikonfirmasi_sementara' OR 'menunggu_tambahan_panen' AND komoditas_id = komoditasId AND kopdes_id IN kopdesIds
+            const { data: ordersFromKopdes, error: ordersKopdesError } = await supabase
+              .from('orders')
+              .select('id')
+              .in('status', ['dikonfirmasi_sementara', 'menunggu_tambahan_panen'])
+              .eq('komoditas_id', komoditasId)
+              .in('kopdes_id', kopdesIds);
+
+            if (ordersKopdesError) {
+              console.error('[Intake Grading] Error fetching orders from kopdes:', ordersKopdesError);
+            } else {
+              const orderIdsFromKopdes = new Set((ordersFromKopdes || []).map(o => o.id));
+
+              // 4. Cari order_allocation WHERE desa_id = petaniDesaId
+              const { data: orderAllocations, error: allocationError } = await supabase
+                .from('order_allocation')
+                .select('order_id')
+                .eq('desa_id', petaniDesaId);
+
+              if (allocationError) {
+                console.error('[Intake Grading] Error fetching order_allocations:', allocationError);
+              } else {
+                const orderIdsFromAllocation = new Set((orderAllocations || []).map(a => a.order_id));
+
+                // 5. Gabungkan dan dedupe order_id
+                const allOrderIds = new Set([...orderIdsFromKopdes, ...orderIdsFromAllocation]);
+
+                console.log(`[Intake Grading] Found ${allOrderIds.size} orders to validate`);
+
+                // 6. Validasi setiap order (non-blocking per order)
+                for (const orderId of allOrderIds) {
+                  try {
+                    await validateOrderCapacity(orderId);
+                    console.log(`[Intake Grading] Successfully validated order ${orderId}`);
+                  } catch (err) {
+                    console.error(`[Intake Grading] Error validating order ${orderId} (non-blocking):`, err);
+                    // Continue to next order even if this one fails
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error triggering order validation (non-blocking):', err);
+        // Sengaja tidak return/throw di sini -- kegagalan validasi order TIDAK BOLEH
         // menggagalkan response utama insert intake_grading
       }
 
