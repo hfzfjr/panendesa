@@ -8,6 +8,7 @@ import authRouter from './api/routes/auth';
 import intakeGradingRouter from './api/routes/intakeGrading';
 import trustScoreRouter from './api/routes/trustScore';
 import capacityRouter from './api/routes/capacity';
+import ordersRouter from './api/routes/orders';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -33,6 +34,7 @@ app.use('/api/stok-estimasi', stokEstimasiRouter);
 app.use('/api/intake-grading', intakeGradingRouter);
 app.use('/api/trust-score', trustScoreRouter);
 app.use('/api/capacity', capacityRouter);
+app.use('/api/orders', ordersRouter);
 
 // Start server
 app.listen(PORT, () => {

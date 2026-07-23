@@ -1,11 +1,59 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
+import { apiClient } from "../../../lib/api-client";
+import { authStorage, getDashboardPath } from "../../../lib/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await apiClient.login(formData.email, formData.password);
+
+      if (response.success && response.data) {
+        // Store token and user data
+        authStorage.setToken(response.data.token);
+        authStorage.setUser({
+          user_id: response.data.user_id,
+          role: response.data.role,
+        });
+
+        // Redirect to appropriate dashboard based on role
+        const dashboardPath = getDashboardPath(response.data.role);
+        router.push(dashboardPath);
+      } else {
+        setError(response.error || 'Login gagal. Silakan coba lagi.');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-primary selection:text-white flex">
 
@@ -56,14 +104,24 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm">Silakan masukkan detail akun Anda untuk masuk ke sistem.</p>
         </div>
 
-        <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
 
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-gray-700">Nomor HP atau Email</label>
             <input
               type="text"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               placeholder="Contoh: 081234567890"
               className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:text-gray-400"
+              disabled={isLoading}
             />
           </div>
 
@@ -76,8 +134,12 @@ export default function LoginPage() {
             </div>
             <input
               type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               placeholder="••••••••"
               className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:text-gray-400"
+              disabled={isLoading}
             />
           </div>
 
@@ -86,11 +148,20 @@ export default function LoginPage() {
             <label htmlFor="remember" className="text-sm text-gray-600">Ingat saya di perangkat ini</label>
           </div>
 
-          <Link href="/pembeli" className="block w-full pt-4">
-            <Button className="w-full h-12 rounded-xl bg-primary-dark hover:bg-primary font-bold text-[15px] transition-colors">
-              Masuk
-            </Button>
-          </Link>
+          <Button
+            type="submit"
+            className="w-full h-12 rounded-xl bg-primary-dark hover:bg-primary font-bold text-[15px] transition-colors flex items-center justify-center gap-2"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Memproses...
+              </>
+            ) : (
+              'Masuk'
+            )}
+          </Button>
 
         </form>
 

@@ -1,15 +1,34 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, Tractor, Store, Building2, ChevronRight } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Tractor, Store, Building2, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
+import { apiClient } from "../../../lib/api-client";
+import { authStorage, getDashboardPath } from "../../../lib/auth";
 
 type Role = "petani" | "kopdes" | "pembeli" | null;
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [role, setRole] = useState<Role>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    nama_lengkap: '',
+    nik: '',
+    desa_id: '',
+    nama_koperasi: '',
+    nomor_badan_hukum: '',
+    nama_penanggung_jawab: '',
+    tipe_pembeli: '',
+    alamat_pengiriman: '',
+    nomor_hp: '',
+  });
 
   const handleRoleSelect = (selectedRole: Role) => {
     setRole(selectedRole);
@@ -20,6 +39,67 @@ export default function RegisterPage() {
     if (step === 2) {
       setStep(1);
       setRole(null);
+      setError(null);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!role) {
+        setError('Role tidak valid');
+        return;
+      }
+
+      const backendRole: "petani" | "petugas_kopdes" | "pembeli" | "admin" =
+        role === 'kopdes' ? 'petugas_kopdes' : role;
+
+      const registerData = {
+        email: formData.email,
+        password: formData.password,
+        role: backendRole,
+        nama_lengkap: formData.nama_lengkap,
+        nik: formData.nik,
+        desa_id: formData.desa_id ? parseInt(formData.desa_id) : undefined,
+        nama_koperasi: formData.nama_koperasi,
+        nomor_badan_hukum: formData.nomor_badan_hukum,
+        nama_penanggung_jawab: formData.nama_penanggung_jawab,
+        tipe_pembeli: formData.tipe_pembeli,
+        alamat_pengiriman: formData.alamat_pengiriman,
+        nomor_hp: formData.nomor_hp,
+      };
+
+      const response = await apiClient.register(registerData);
+
+      if (response.success && response.data) {
+        // Store token and user data
+        authStorage.setToken(response.data.token);
+        authStorage.setUser({
+          user_id: response.data.user_id,
+          role: response.data.role,
+        });
+
+        // Redirect to appropriate dashboard based on role
+        const dashboardPath = getDashboardPath(response.data.role);
+        router.push(dashboardPath);
+      } else {
+        setError(response.error || 'Pendaftaran gagal. Silakan coba lagi.');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -161,30 +241,94 @@ export default function RegisterPage() {
               Lengkapi data profil di bawah ini untuk menyelesaikan pendaftaran Anda.
             </p>
 
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+            {error && step === 2 && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <form className="space-y-5" onSubmit={handleSubmit}>
+
+              {/* Common fields for all roles */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="contoh@email.com"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                  disabled={isLoading}
+                  required
+                />
+              </div>
 
               {/* ----------------- FORM PETANI ----------------- */}
               {role === "petani" && (
                 <>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Nama Lengkap</label>
-                    <input type="text" placeholder="Sesuai KTP" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="nama_lengkap"
+                      value={formData.nama_lengkap}
+                      onChange={handleChange}
+                      placeholder="Sesuai KTP"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">NIK (Nomor Induk Kependudukan)</label>
-                    <input type="text" placeholder="16 Digit NIK" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="nik"
+                      value={formData.nik}
+                      onChange={handleChange}
+                      placeholder="16 Digit NIK"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Asal Desa / Lokasi</label>
-                    <input type="text" placeholder="Contoh: Desa Sukamaju, Cianjur" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="desa_id"
+                      value={formData.desa_id}
+                      onChange={handleChange}
+                      placeholder="ID Desa (opsional)"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Nomor HP</label>
-                    <input type="text" placeholder="Contoh: 0812..." className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="nomor_hp"
+                      value={formData.nomor_hp}
+                      onChange={handleChange}
+                      placeholder="Contoh: 0812..."
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Kata Sandi</label>
-                    <input type="password" placeholder="Min. 8 karakter" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Min. 8 karakter"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                 </>
               )}
@@ -194,28 +338,80 @@ export default function RegisterPage() {
                 <>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Nama Koperasi</label>
-                    <input type="text" placeholder="Contoh: Kopdes Makmur Abadi" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="nama_koperasi"
+                      value={formData.nama_koperasi}
+                      onChange={handleChange}
+                      placeholder="Contoh: Kopdes Makmur Abadi"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Nomor Badan Hukum / SK</label>
-                    <input type="text" placeholder="Nomor perizinan operasional" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="nomor_badan_hukum"
+                      value={formData.nomor_badan_hukum}
+                      onChange={handleChange}
+                      placeholder="Nomor perizinan operasional"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Desa Induk (Area Operasional)</label>
-                    <input type="text" placeholder="Contoh: Desa Lembang, Bandung" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="desa_id"
+                      value={formData.desa_id}
+                      onChange={handleChange}
+                      placeholder="ID Desa"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Nama Penanggung Jawab</label>
-                    <input type="text" placeholder="Nama ketua/pengurus" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="nama_penanggung_jawab"
+                      value={formData.nama_penanggung_jawab}
+                      onChange={handleChange}
+                      placeholder="Nama ketua/pengurus"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-gray-700">Nomor HP</label>
-                      <input type="text" placeholder="0812..." className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                      <input
+                        type="text"
+                        name="nomor_hp"
+                        value={formData.nomor_hp}
+                        onChange={handleChange}
+                        placeholder="0812..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                        disabled={isLoading}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-gray-700">Kata Sandi</label>
-                      <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                        disabled={isLoading}
+                        required
+                      />
                     </div>
                   </div>
                 </>
@@ -226,11 +422,26 @@ export default function RegisterPage() {
                 <>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Nama Lengkap / Perusahaan</label>
-                    <input type="text" placeholder="Nama Anda atau PT/CV" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                    <input
+                      type="text"
+                      name="nama_lengkap"
+                      value={formData.nama_lengkap}
+                      onChange={handleChange}
+                      placeholder="Nama Anda atau PT/CV"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                      disabled={isLoading}
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Tipe Pembeli</label>
-                    <select className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none text-gray-700 bg-white">
+                    <select
+                      name="tipe_pembeli"
+                      value={formData.tipe_pembeli}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none text-gray-700 bg-white"
+                      disabled={isLoading}
+                    >
                       <option value="">-- Pilih Tipe --</option>
                       <option value="retail">Retail (Individu/Warung)</option>
                       <option value="b2b">Grosir B2B (Pabrik/Supermarket)</option>
@@ -238,24 +449,60 @@ export default function RegisterPage() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-700">Alamat Pengiriman Utama</label>
-                    <textarea rows={3} placeholder="Alamat lengkap tujuan pengiriman" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400 resize-none"></textarea>
+                    <textarea
+                      name="alamat_pengiriman"
+                      value={formData.alamat_pengiriman}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Alamat lengkap tujuan pengiriman"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400 resize-none"
+                      disabled={isLoading}
+                    ></textarea>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-gray-700">Nomor HP</label>
-                      <input type="text" placeholder="0812..." className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                      <input
+                        type="text"
+                        name="nomor_hp"
+                        value={formData.nomor_hp}
+                        onChange={handleChange}
+                        placeholder="0812..."
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                        disabled={isLoading}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-gray-700">Kata Sandi</label>
-                      <input type="password" placeholder="••••••••" className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400" />
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-gray-400"
+                        disabled={isLoading}
+                        required
+                      />
                     </div>
                   </div>
                 </>
               )}
 
               <div className="pt-4">
-                <Button className="w-full h-12 rounded-xl bg-primary-dark hover:bg-primary font-bold text-[15px] transition-colors">
-                  Buat Akun
+                <Button
+                  type="submit"
+                  className="w-full h-12 rounded-xl bg-primary-dark hover:bg-primary font-bold text-[15px] transition-colors flex items-center justify-center gap-2"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Memproses...
+                    </>
+                  ) : (
+                    'Buat Akun'
+                  )}
                 </Button>
                 <p className="text-xs text-center text-gray-500 mt-4 leading-relaxed">
                   Dengan mendaftar, Anda menyetujui <span className="font-bold text-primary-dark">Syarat & Ketentuan</span> serta <span className="font-bold text-primary-dark">Kebijakan Privasi</span> PanenDesa.
