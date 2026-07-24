@@ -12,7 +12,8 @@ import {
   History,
   Headphones,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Award
 } from "lucide-react";
 
 export function PetaniSidebar() {
@@ -23,20 +24,20 @@ export function PetaniSidebar() {
     { name: "Tanaman Saya", href: "/petani/tanaman", icon: Sprout },
     { name: "Buku Tabungan", href: "/petani/pendapatan", icon: ClipboardCheck },
     { name: "Pesanan Masuk", href: "/petani/pesanan", icon: ShoppingCart },
-    { name: "Pengiriman", href: "/petani/logistik", icon: Truck },
-    { name: "Riwayat", href: "/petani/audit", icon: History },
+    { name: "Jadwal Penjemputan", href: "/petani/logistik", icon: Truck },
+    { name: "Skor Kepercayaan", href: "/petani/skor", icon: Award },
   ];
 
   const bottomLinks = [
-    { name: "Bantuan Teknis", href: "/petani/bantuan-teknis", icon: Headphones, isButton: true },
+    { name: "Konsultasi Pertanian", href: "/petani/bantuan-teknis", icon: Headphones, isButton: true },
     { name: "Pengaturan", href: "/petani/pengaturan", icon: Settings },
-    { name: "Bantuan", href: "/petani/bantuan", icon: HelpCircle },
+    { name: "Panduan Aplikasi", href: "/petani/bantuan", icon: HelpCircle },
   ];
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen bg-[#F9FAFB] border-r border-gray-200 fixed left-0 top-16 pt-6 pb-20 z-40 overflow-y-auto">
       <div className="px-6 mb-8">
-        <h2 className="text-[#1B5E20] font-bold text-sm">PanenDesa</h2>
+        <h2 className="text-primary-dark font-bold text-sm">PanenDesa</h2>
         <p className="text-gray-500 text-xs mt-1">Agri-Ecosystem Hub</p>
       </div>
 
@@ -48,7 +49,7 @@ export function PetaniSidebar() {
               key={link.name}
               href={link.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${isActive
-                  ? "bg-[#1B5E20] text-white shadow-sm"
+                  ? "bg-primary-dark text-white shadow-sm"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
             >
@@ -66,7 +67,7 @@ export function PetaniSidebar() {
               <Link
                 key={link.name}
                 href={link.href}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#1B5E20] text-white font-bold shadow-md hover:bg-green-800 transition-colors mb-4"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-dark text-white font-bold shadow-md hover:bg-primary transition-colors mb-4"
               >
                 <link.icon className="w-5 h-5" />
                 <span>{link.name}</span>

@@ -2,183 +2,161 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Camera, UploadCloud, Leaf, AlertTriangle, CheckCircle2, Droplets, FlaskConical, Shovel, Send } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, UploadCloud, Leaf, AlertCircle, Save } from "lucide-react";
 
-export default function LaporanBaruPage() {
-  const [fase, setFase] = useState<string>("Tumbuh (Vegetatif)");
-  const [kondisi, setKondisi] = useState<string | null>(null);
-  const [isDisiram, setIsDisiram] = useState(true);
-  const [isDipupuk, setIsDipupuk] = useState(false);
-  const [isDibersihkan, setIsDibersihkan] = useState(false);
+export default function LaporanKondisiBaruPage() {
+  const [komoditas, setKomoditas] = useState("");
+  const [kondisi, setKondisi] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Simulate network request
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSuccess(true);
+    }, 1500);
+  };
+
+  if (isSuccess) {
+    return (
+      <div className="p-4 md:p-8 max-w-3xl mx-auto min-h-[70vh] flex items-center justify-center">
+        <div className="bg-white p-8 md:p-12 rounded-md shadow-lg border border-gray-100 text-center flex flex-col items-center">
+          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-primary-dark mb-6">
+            <Save className="w-12 h-12" />
+          </div>
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Laporan Tersimpan!</h2>
+          <p className="text-gray-600 text-lg mb-8 max-w-md">
+            Terima kasih telah memperbarui kondisi tanaman Anda. Ini akan membantu meningkatkan Skor Kepercayaan Anda.
+          </p>
+          <Link href="/petani" className="bg-primary-dark hover:bg-primary text-white font-bold px-8 py-4 rounded-md transition-colors shadow-md w-full sm:w-auto">
+            Kembali ke Beranda
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-32 md:pb-8">
-      <div className="pt-2">
-        <Link href="/dashboard/petani" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold mb-6 transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-          <span>Kembali ke Halaman Utama</span>
+    <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6 pb-32 md:pb-8">
+      {/* Header */}
+      <div className="flex items-center gap-4 border-b border-gray-100 pb-4 mb-6">
+        <Link href="/petani" className="w-10 h-10 bg-white border border-gray-200 rounded-md flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors mt-2">
+          <ChevronLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-primary-dark uppercase tracking-tight mb-2">
-          LAPOR PERTUMBUHAN: CABAI MERAH
-        </h1>
-        <p className="text-gray-600 font-medium text-sm md:text-base">
-          Cukup ambil foto dan pilih kondisi tanaman Anda hari ini. Tidak perlu mengetik panjang lebar.
-        </p>
+        <div>
+          <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500 font-medium mb-1">
+            <Link href="/petani" className="hover:text-primary-dark">Halaman Utama</Link>
+            <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="text-gray-900 font-bold">Lapor Kondisi</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900">Lapor Kondisi</h1>
+          <p className="text-gray-500 font-medium hidden md:block">Perbarui status tanaman Anda secara berkala.</p>
+        </div>
       </div>
 
-      <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
-        <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-primary-dark">
-              <span className="font-black text-lg">1</span>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Upload Foto */}
+        <div className="bg-white rounded-md p-6 md:p-8 border border-gray-100 shadow-sm">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-primary-dark" />
+            Foto Kondisi Terkini
+          </h2>
+          <div className="border-2 border-dashed border-gray-300 rounded-md bg-gray-50 p-8 flex flex-col items-center justify-center text-center hover:bg-gray-100 transition-colors cursor-pointer group">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm text-gray-400 group-hover:text-primary-dark group-hover:scale-110 transition-all mb-4">
+              <UploadCloud className="w-8 h-8" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Foto Tanaman Hari Ini</h2>
+            <h3 className="font-bold text-gray-700 text-lg mb-1">Unggah Foto (Opsional)</h3>
+            <p className="text-gray-500 text-sm max-w-xs">
+              Klik untuk memilih atau tarik file foto ke area ini (Maks. 5MB)
+            </p>
           </div>
-
-          <button type="button" className="w-full border-4 border-dashed border-primary-dark/30 hover:border-primary-dark bg-green-50/50 hover:bg-green-50 rounded-2xl h-48 md:h-64 flex flex-col items-center justify-center gap-4 transition-colors group">
-            <div className="w-16 h-16 bg-primary-dark text-white rounded-full flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
-              <Camera className="w-8 h-8" />
-            </div>
-            <div className="text-center">
-              <span className="block font-bold text-primary-dark text-lg md:text-xl">Ambil Foto Langsung</span>
-              <span className="text-sm text-gray-500 font-medium">Atau pilih dari galeri HP Anda</span>
-            </div>
-          </button>
         </div>
-        <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-primary-dark">
-              <span className="font-black text-lg">2</span>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">Masuk Tahap Apa Sekarang?</h2>
-          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {["Bibit", "Tumbuh (Vegetatif)", "Mulai Berbunga", "Mulai Berbuah"].map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setFase(item)}
-                className={`py-4 px-2 font-bold text-base md:text-lg rounded-2xl border-2 transition-all ${fase === item ? 'bg-primary-dark text-white border-primary-dark shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+        {/* Form Detail */}
+        <div className="bg-white rounded-md p-6 md:p-8 border border-gray-100 shadow-sm space-y-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Leaf className="w-5 h-5 text-primary-dark" />
+            Informasi Laporan
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Pilih Tanaman</label>
+              <select 
+                value={komoditas} 
+                onChange={(e) => setKomoditas(e.target.value)}
+                required
+                className="w-full bg-gray-50 border border-gray-200 text-gray-900 py-3.5 px-4 rounded-md outline-none focus:border-primary-dark font-medium"
               >
-                {item}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-primary-dark">
-              <span className="font-black text-lg">3</span>
+                <option value="" disabled>-- Pilih Tanaman yang Sedang Ditanam --</option>
+                <option value="1">Cabai Merah (Petak 1)</option>
+                <option value="2">Bawang Merah (Petak 2)</option>
+              </select>
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Bagaimana Kondisinya?</h2>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setKondisi("Sehat")}
-              className={`flex items-center gap-4 p-6 rounded-2xl border-4 transition-all ${kondisi === "Sehat" ? 'border-green-500 bg-green-50' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
-            >
-              <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-                <CheckCircle2 className="w-10 h-10" />
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Status Pertumbuhan</label>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {['Normal', 'Kekeringan', 'Terserang Hama', 'Siap Panen'].map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setKondisi(status)}
+                    className={`py-3 px-2 rounded-md border text-sm font-bold transition-all ${
+                      kondisi === status 
+                        ? 'bg-primary-dark border-primary-dark text-white shadow-md' 
+                        : 'bg-white border-gray-200 text-gray-600 hover:border-primary-dark'
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
               </div>
-              <div className="text-left">
-                <span className="block font-black text-2xl text-green-700">Sehat & Subur</span>
-                <span className="text-green-600/80 font-medium text-sm">Tidak ada hama terlihat</span>
-              </div>
-            </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => setKondisi("Bermasalah")}
-              className={`flex items-center gap-4 p-6 rounded-2xl border-4 transition-all ${kondisi === "Bermasalah" ? 'border-red-500 bg-red-50' : 'border-gray-100 hover:border-gray-200 bg-white'}`}
-            >
-              <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-                <AlertTriangle className="w-10 h-10" />
-              </div>
-              <div className="text-left">
-                <span className="block font-black text-2xl text-red-700">Ada Masalah</span>
-                <span className="text-red-600/80 font-medium text-sm">Hama, daun kuning, layu, dll</span>
-              </div>
-            </button>
-          </div>
-          {kondisi === "Bermasalah" && (
-            <div className="mt-6 p-5 bg-red-50 border-2 border-red-200 rounded-2xl">
-              <label className="block font-bold text-red-900 mb-2">Ceritakan sedikit masalahnya (Opsional)</label>
-              <textarea
-                rows={3}
-                className="w-full bg-white border-2 border-red-200 rounded-xl p-4 text-lg font-medium text-gray-900 focus:border-red-500 focus:ring-0 outline-none transition-colors"
-                placeholder="Contoh: Daunnya mulai keriting dan kuning..."
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center justify-between">
+                Catatan Tambahan
+                <span className="text-gray-400 font-normal text-xs">Opsional</span>
+              </label>
+              <textarea 
+                rows={4}
+                placeholder="Ceritakan detail kondisi tanaman Anda di sini..."
+                className="w-full bg-gray-50 border border-gray-200 text-gray-900 py-3 px-4 rounded-md outline-none focus:border-primary-dark font-medium resize-none"
               ></textarea>
             </div>
-          )}
-        </div>
-        <div className="bg-white rounded-3xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-primary-dark">
-              <span className="font-black text-lg">4</span>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900">Apa yang Anda Lakukan Hari Ini?</h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <label className={`flex items-center justify-between p-5 rounded-2xl border-2 cursor-pointer transition-colors ${isDisiram ? 'border-primary-dark bg-green-50' : 'border-gray-200 bg-white'}`}>
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDisiram ? 'bg-primary-dark text-white' : 'bg-gray-100 text-gray-500'}`}>
-                  <Droplets className="w-6 h-6" />
-                </div>
-                <span className={`font-bold text-lg md:text-xl ${isDisiram ? 'text-primary-dark' : 'text-gray-700'}`}>Saya Menyiram Lahan</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={isDisiram}
-                onChange={() => setIsDisiram(!isDisiram)}
-                className="w-8 h-8 rounded border-gray-300 text-primary-dark focus:ring-primary-dark cursor-pointer"
-              />
-            </label>
-            <label className={`flex items-center justify-between p-5 rounded-2xl border-2 cursor-pointer transition-colors ${isDipupuk ? 'border-primary-dark bg-green-50' : 'border-gray-200 bg-white'}`}>
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDipupuk ? 'bg-primary-dark text-white' : 'bg-gray-100 text-gray-500'}`}>
-                  <FlaskConical className="w-6 h-6" />
-                </div>
-                <span className={`font-bold text-lg md:text-xl ${isDipupuk ? 'text-primary-dark' : 'text-gray-700'}`}>Saya Memberi Pupuk</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={isDipupuk}
-                onChange={() => setIsDipupuk(!isDipupuk)}
-                className="w-8 h-8 rounded border-gray-300 text-primary-dark focus:ring-primary-dark cursor-pointer"
-              />
-            </label>
-            <label className={`flex items-center justify-between p-5 rounded-2xl border-2 cursor-pointer transition-colors ${isDibersihkan ? 'border-primary-dark bg-green-50' : 'border-gray-200 bg-white'}`}>
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isDibersihkan ? 'bg-primary-dark text-white' : 'bg-gray-100 text-gray-500'}`}>
-                  <Shovel className="w-6 h-6" />
-                </div>
-                <span className={`font-bold text-lg md:text-xl ${isDibersihkan ? 'text-primary-dark' : 'text-gray-700'}`}>Membersihkan Lahan/Gulma</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={isDibersihkan}
-                onChange={() => setIsDibersihkan(!isDibersihkan)}
-                className="w-8 h-8 rounded border-gray-300 text-primary-dark focus:ring-primary-dark cursor-pointer"
-              />
-            </label>
+          <div className="bg-warning/10 rounded-md p-4 flex gap-3 border border-warning/20">
+            <AlertCircle className="w-5 h-5 text-warning shrink-0" />
+            <p className="text-sm font-medium text-neutral-900">
+              Laporan rutin akan meningkatkan nilai <b>Skor Kepercayaan</b> Anda di mata pembeli.
+            </p>
           </div>
         </div>
-        <div className="fixed bottom-0 left-0 right-0 md:static bg-white md:bg-transparent border-t md:border-none border-gray-200 p-4 md:p-0 z-40 shadow-lg md:shadow-none">
-          <div className="max-w-4xl mx-auto flex gap-3">
-            <button
-              type="button"
-              className={`w-full flex items-center justify-center gap-2 py-4 px-10 font-black text-white text-lg rounded-2xl transition-all shadow-xl ${kondisi ? 'bg-primary-dark hover:bg-green-800' : 'bg-gray-300 cursor-not-allowed shadow-none'}`}
-              disabled={!kondisi}
-            >
-              <Send className="w-6 h-6" />
-              <span>Kirim Laporan</span>
-            </button>
-          </div>
-        </div>
+
+        {/* Submit */}
+        <button 
+          type="submit" 
+          disabled={isSubmitting}
+          className={`w-full font-bold text-lg py-4 rounded-md transition-all shadow-md flex items-center justify-center gap-2 ${
+            isSubmitting 
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+              : 'bg-primary-dark hover:bg-primary text-white'
+          }`}
+        >
+          {isSubmitting ? (
+            <>
+              <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></div>
+              Menyimpan...
+            </>
+          ) : (
+            'Kirim Laporan'
+          )}
+        </button>
       </form>
     </div>
   );

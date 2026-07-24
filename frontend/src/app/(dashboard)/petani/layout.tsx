@@ -21,11 +21,7 @@ export default function PetaniDashboardLayout({
       </div>
       <PetaniBottomNav />
       
-      {/* Tombol Bantuan WA Melayang (Global) */}
-      <button className="fixed bottom-20 lg:bottom-8 left-4 lg:left-72 bg-[#25D366] text-white p-4 rounded-full shadow-xl flex items-center justify-center gap-2 hover:bg-[#128C7E] transition-all z-50 group">
-        <MessageCircle className="w-8 h-8 md:w-6 md:h-6" />
-        <span className="hidden md:inline-block font-bold pr-2">Tanya Admin</span>
-      </button>
+
     </div>
   );
 }
