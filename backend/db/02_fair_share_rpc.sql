@@ -37,7 +37,7 @@ BEGIN
   -- 1. Ambil data order dengan row lock (FOR UPDATE OF o) untuk mencegah race condition
   -- Hanya lock row orders, bukan kopdes yang di-JOIN
   SELECT o.id, o.kopdes_id, o.harga_final_per_kg, o.fee_kopdes_persen_terpakai,
-         o.jumlah_diminta_kg, o.status, o.harga_terkunci, k.desa_id
+         o.jumlah_diminta_kg, o.status, o.harga_terkunci, o.created_at, k.desa_id
   INTO v_order
   FROM orders o
   JOIN kopdes k ON o.kopdes_id = k.id

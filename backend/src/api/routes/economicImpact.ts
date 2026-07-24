@@ -61,9 +61,25 @@ router.get('/:komoditas_id', verifyToken, async (req: Request, res: Response) =>
 
     // Kalau error karena tidak ada data fair_share_distribution sama sekali
     if (error instanceof Error && error.message.includes('Belum ada data transaksi')) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          harga_rata_panendesa_per_kg: 0,
+          estimasi_harga_tengkulak_per_kg: 0,
+          selisih_persen: 0,
+          sumber_referensi_margin: '',
+          label: 'Estimasi berbasis riset, bukan data transaksi real-time',
+          periode_data: 'belum_ada_data',
+          catatan: 'Belum ada data transaksi untuk komoditas ini'
+        }
+      });
+    }
+
+    // Kalau error karena data referensi tidak ditemukan (harga_acuan atau benchmark_margin)
+    if (error instanceof Error && (error.message.includes('Harga acuan') || error.message.includes('Benchmark margin'))) {
       return res.status(404).json({
         success: false,
-        error: 'Belum ada data transaksi untuk komoditas ini, perbandingan belum bisa dihitung'
+        error: error.message
       });
     }
 

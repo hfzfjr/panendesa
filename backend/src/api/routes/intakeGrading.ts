@@ -26,7 +26,7 @@ const upload = multer({
   },
   fileFilter: (req, file, cb) => {
     // Accept only image files
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -69,6 +69,12 @@ router.post('/',
     try {
       const { stok_estimasi_id, berat_aktual_kg, grade_override_manual } = req.body;
       const petugas_id = req.user!.user_id;
+
+      // Request logging for debugging
+      console.log('[Intake Grading] Request received');
+      console.log('[Intake Grading] Headers:', JSON.stringify(req.headers, null, 2));
+      console.log('[Intake Grading] Body:', JSON.stringify(req.body, null, 2));
+      console.log('[Intake Grading] File:', req.file ? { originalname: req.file.originalname, mimetype: req.file.mimetype, size: req.file.size } : 'No file');
 
       // Validation
       if (!stok_estimasi_id || isNaN(parseInt(stok_estimasi_id))) {
@@ -155,9 +161,48 @@ router.post('/',
         });
       }
 
-      // Upload foto to Supabase Storage (placeholder - for now just use a dummy URL)
-      // TODO: Implement proper file upload to Supabase Storage in next phase
-      const foto_url = `https://placeholder.com/foto/${Date.now()}.jpg`;
+      // Upload foto to Supabase Storage
+      let foto_url: string;
+      try {
+        // Generate unique filename
+        const fileExt = req.file.mimetype.split('/')[1];
+        const fileName = `${stokEstimasiId}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        console.log('[Intake Grading] Uploading file to Supabase Storage:', filePath);
+
+        // Upload to Supabase Storage bucket "intake_grading"
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('intake_grading')
+          .upload(filePath, req.file.buffer, {
+            contentType: req.file.mimetype,
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('[Intake Grading] Supabase Storage upload error:', uploadError);
+          return res.status(500).json({
+            success: false,
+            error: 'Gagal upload foto ke storage. Silakan coba lagi.'
+          });
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase
+          .storage
+          .from('intake_grading')
+          .getPublicUrl(filePath);
+
+        foto_url = publicUrl;
+        console.log('[Intake Grading] File uploaded successfully:', foto_url);
+      } catch (storageError) {
+        console.error('[Intake Grading] Storage upload exception:', storageError);
+        return res.status(500).json({
+          success: false,
+          error: 'Terjadi kesalahan saat upload foto ke storage'
+        });
+      }
 
       // Logic kejanggalan: bandingkan berat aktual dengan estimasi
       // Threshold 30% - jika selisih > 30%, tandai sebagai kejanggalan

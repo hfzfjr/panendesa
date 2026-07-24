@@ -27,7 +27,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Query user from database using admin client (bypass RLS)
     const { data: user, error } = await supabase
       .from('users')
-      .select('*')
+      .select('id, nama, role, desa_id, email, password_hash, skor_konsistensi')
       .eq('email', email)
       .single();
 
@@ -48,12 +48,15 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
+    // Strip password_hash from user object before response
+    const { password_hash, ...userSafe } = user;
+
     // Generate JWT token
     const token = jwt.sign(
       {
-        user_id: user.id,
-        role: user.role,
-        desa_id: user.desa_id
+        user_id: userSafe.id,
+        role: userSafe.role,
+        desa_id: userSafe.desa_id
       },
       JWT_SECRET,
       { expiresIn: '24h' }
@@ -64,8 +67,9 @@ router.post('/login', async (req: Request, res: Response) => {
       success: true,
       data: {
         token,
-        role: user.role,
-        user_id: user.id
+        role: userSafe.role,
+        user_id: userSafe.id,
+        desa_id: userSafe.desa_id
       }
     });
   } catch (error) {

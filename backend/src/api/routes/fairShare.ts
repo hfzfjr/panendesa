@@ -68,6 +68,7 @@ router.post('/:order_id/calculate', verifyToken, requireRole(['petugas_kopdes'])
     }
 
     // Panggil RPC function calculate_fair_share
+    console.log('[Fair Share] Calling calculate_fair_share for order_id:', orderIdNum);
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('calculate_fair_share', { p_order_id: orderIdNum });
 
@@ -75,11 +76,15 @@ router.post('/:order_id/calculate', verifyToken, requireRole(['petugas_kopdes'])
       // Tangkap error dari Postgres (termasuk precondition gagal atau grade invalid)
       // Return 400 dengan pesan dari error.message supaya pesan RAISE EXCEPTION sampai ke user
       console.error('[Fair Share] RPC error:', rpcError);
+      console.error('[Fair Share] RPC error details:', JSON.stringify(rpcError, null, 2));
+      console.error('[Fair Share] RPC error message:', rpcError.message);
       return res.status(400).json({
         success: false,
         error: rpcError.message || 'Gagal menghitung distribusi hasil'
       });
     }
+
+    console.log('[Fair Share] RPC success:', JSON.stringify(rpcData, null, 2));
 
     // Teruskan hasil dari RPC langsung
     return res.json(rpcData);

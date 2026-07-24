@@ -12,6 +12,7 @@ import ordersRouter from './api/routes/orders';
 import fairShareRouter from './api/routes/fairShare';
 import auditLogRouter from './api/routes/auditLog';
 import economicImpactRouter from './api/routes/economicImpact';
+import komoditasRouter from './api/routes/komoditas';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,8 +42,14 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/fair-share', fairShareRouter);
 app.use('/api/audit-log', auditLogRouter);
 app.use('/api/economic-impact', economicImpactRouter);
+app.use('/api/komoditas', komoditasRouter);
 
 // Start server
 app.listen(PORT, () => {
+  const timestamp = new Date().toISOString();
+  console.log('=== SERVER STARTED - VERSION 1.1 ===');
   console.log(`PanenDesa Backend running on port ${PORT}`);
+  console.log(`Server started at: ${timestamp}`);
+  console.log('=== LOGGING ENABLED FOR FAIR SHARE DEBUGGING ===');
+  console.log('=== INTAKE GRADING REQUEST LOGGING ENABLED ===');
 });

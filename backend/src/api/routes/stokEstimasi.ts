@@ -10,14 +10,16 @@ router.post('/', verifyToken, requireRole(['petani']), async (req: Request, res:
     const { komoditas_id, jumlah_kg, tanggal_target_panen } = req.body;
 
     // Validation
-    if (!komoditas_id || typeof komoditas_id !== 'number') {
+    const komoditasIdNum = typeof komoditas_id === 'string' ? parseInt(komoditas_id) : komoditas_id;
+    if (!komoditasIdNum || isNaN(komoditasIdNum)) {
       return res.status(400).json({
         success: false,
         error: 'komoditas_id wajib diisi dan harus berupa angka'
       });
     }
 
-    if (!jumlah_kg || typeof jumlah_kg !== 'number' || jumlah_kg <= 0) {
+    const jumlahKgNum = typeof jumlah_kg === 'string' ? parseFloat(jumlah_kg) : jumlah_kg;
+    if (!jumlahKgNum || isNaN(jumlahKgNum) || jumlahKgNum <= 0) {
       return res.status(400).json({
         success: false,
         error: 'jumlah_kg wajib diisi dan harus lebih dari 0'
@@ -60,8 +62,8 @@ router.post('/', verifyToken, requireRole(['petani']), async (req: Request, res:
       .from('stok_estimasi')
       .insert({
         petani_id,
-        komoditas_id,
-        jumlah_kg,
+        komoditas_id: komoditasIdNum,
+        jumlah_kg: jumlahKgNum,
         tanggal_target_panen: new Date(tanggal_target_panen).toISOString(),
         status: 'menunggu_panen'
       })
