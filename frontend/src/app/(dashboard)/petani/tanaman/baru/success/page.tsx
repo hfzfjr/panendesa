@@ -4,7 +4,7 @@ import { CheckCircle2, FileText, Eye, LayoutDashboard, MapPin, ClipboardList } f
 
 export default function TanamBaruSuccessPage() {
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-8 md:space-y-10 pb-24 md:pb-8 text-center pt-8 md:pt-12">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-8 md:space-y-10 pb-24 md:pb-8 text-center pt-8 md:pt-12">
       <div className="flex flex-col items-center justify-center space-y-4">
         <div className="w-24 h-24 md:w-32 md:h-32 bg-green-100 text-primary-dark rounded-full flex items-center justify-center mb-2 animate-bounce-slow shadow-sm">
           <CheckCircle2 className="w-16 h-16 md:w-20 md:h-20" />

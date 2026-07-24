@@ -2,19 +2,26 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowLeft, Star, TrendingUp, Camera, Package, MapPin, Calendar, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, TrendingUp, Camera, Package, MapPin, Calendar, CheckCircle2 } from "lucide-react";
 
 export default function DetailTanamanPage() {
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-32 md:pb-8">
-      <div className="pt-2">
-        <Link href="/petani/tanaman" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold mb-6 transition-colors">
-          <ArrowLeft className="w-5 h-5" />
-          <span>Kembali ke Tanaman Saya</span>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 pb-32 md:pb-8">
+      <div className="flex items-center gap-4 border-b border-gray-100 pb-4 pt-2 mb-6">
+        <Link href="/petani/tanaman" className="w-10 h-10 bg-white border border-gray-200 rounded-md flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors mt-2">
+          <ChevronLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-2xl md:text-3xl font-extrabold text-primary-dark uppercase tracking-tight mb-2">
-          RAPOR TANAMAN: CABAI MERAH
-        </h1>
+        <div>
+          <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500 font-medium mb-1">
+            <Link href="/petani" className="hover:text-primary-dark">Halaman Utama</Link>
+            <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+            <Link href="/petani/tanaman" className="hover:text-primary-dark">Tanaman Saya</Link>
+            <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+            <span className="text-gray-900 font-bold">Rapor Tanaman</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-primary-dark uppercase tracking-tight mb-2">
+            RAPOR TANAMAN: CABAI MERAH
+          </h1>
         <div className="flex flex-wrap gap-3">
           <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
             <MapPin className="w-4 h-4" /> Sawah Blok C
@@ -22,6 +29,7 @@ export default function DetailTanamanPage() {
           <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
             <Calendar className="w-4 h-4" /> Ditanam: 1 Mei 2026
           </span>
+        </div>
         </div>
       </div>
       <div className="bg-primary-dark rounded-3xl p-6 md:p-8 shadow-xl shadow-green-900/20 text-white relative overflow-hidden">
@@ -103,7 +111,7 @@ export default function DetailTanamanPage() {
         </div>
       </div>
       <div className="fixed bottom-0 left-0 right-0 md:static bg-white md:bg-transparent border-t md:border-none border-gray-200 p-4 md:p-0 z-40 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
-        <div className="max-w-4xl mx-auto flex gap-3">
+        <div className="max-w-7xl mx-auto flex gap-3">
           <Link
             href="/petani/laporan/baru"
             className="flex-1 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 md:py-4 px-2 font-black bg-white text-primary-dark border-2 border-primary-dark rounded-2xl hover:bg-green-50 transition-all shadow-md"

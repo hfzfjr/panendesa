@@ -6,7 +6,7 @@ import { ArrowLeft, Download, Share2, Receipt, Users, CheckCircle2, Building2 } 
 
 export default function DetailBagiHasilPage() {
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-32 md:pb-8">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 pb-32 md:pb-8">
       <div className="pt-2">
         <Link href="/dashboard/petani/pendapatan" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold mb-6 transition-colors">
           <ArrowLeft className="w-5 h-5" />
@@ -157,7 +157,7 @@ export default function DetailBagiHasilPage() {
         </div>
       </div>
       <div className="fixed bottom-0 left-0 right-0 md:static bg-white md:bg-transparent border-t md:border-none border-gray-200 p-4 md:p-0 z-40 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] md:shadow-none pb-safe">
-        <div className="max-w-4xl mx-auto flex gap-3">
+        <div className="max-w-7xl mx-auto flex gap-3">
           <button
             type="button"
             className="flex-1 flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 py-3 md:py-4 px-2 font-black bg-white text-primary-dark border-2 border-primary-dark rounded-2xl hover:bg-green-50 transition-all shadow-md"
