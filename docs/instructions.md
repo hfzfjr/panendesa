@@ -34,4 +34,55 @@ Ini adalah lembar instruksi induk. Sebelum menulis kode apapun, baca dokumen ber
 
 ## Jika AI Ragu
 
-Jika instruksi dari pengguna tampak bertentangan dengan salah satu dokumen di atas (misalnya diminta membuat fitur pembayaran otomatis penuh padahal itu di luar lingkup MVP, atau diminta menyembunyikan fee kopdes dari pembeli), AI harus **bertanya dulu** untuk konfirmasi sebelum melanjutkan, bukan langsung mengeksekusi asumsi sendiri.
+Jika instruksi dari pengguna tampak bertentangan dengan salahatu dokumen di atas (misalnya diminta membuat fitur pembayaran otomatis penuh padahal itu di luar lingkup MVP, atau diminta menyembunyikan fee kopdes dari pembeli), AI harus **bertanya dulu** untuk konfirmasi sebelum melanjutkan, bukan langsung mengeksekusi asumsi sendiri.
+
+## TODO / Known Gaps
+
+- **Admin User Management Endpoint**: Perlu endpoint `POST /api/admin/users` dengan `requireRole(['admin'])` untuk create user dengan role petani/kopdes/admin. Saat ini self-registration di `POST /api/auth/register` sudah di-hardcode ke `role='pembeli'` untuk mencegah privilege escalation, dan tidak ada cara bagi admin untuk create user dengan role lain selain lewat `seed.ts` manual. Endpoint ini harus menerima parameter role yang divalidasi dan dilindungi dengan middleware admin-only.
+
+- **Rate Limiting for Auth Endpoints**: Sudah diimplementasikan menggunakan `express-rate-limit` dengan limit 10 request per menit per IP untuk login, register, dan oauth-exchange. Rate limiting di-skip saat test (NODE_ENV=test). Di production, endpoint-endpoint ini dilindungi dari brute force attack.
+
+- **Refresh Token System**: Sudah diimplementasikan untuk persistent login. Access token berdurasi 2 jam, refresh token berdurasi 30 hari. Refresh token disimpan sebagai SHA-256 hash di database untuk keamanan. Endpoint `/api/auth/refresh` untuk dapat access token baru, `/api/auth/logout` untuk revoke refresh token. Migration `04_refresh_tokens.sql` perlu dijalankan di Supabase.
+
+## OAuth Integration Flow
+
+Untuk implementasi Google OAuth di frontend, ikuti alur berikut:
+
+1. **Initiate OAuth**: Panggil `supabase.auth.signInWithOAuth({ provider: 'google' })` dari frontend untuk memulai login Google
+2. **Get Access Token**: Setelah user berhasil login, ambil `access_token` dari session Supabase (`supabase.auth.getSession()`)
+3. **Token Exchange**: Kirim `access_token` tersebut ke endpoint backend `POST /api/auth/oauth-exchange`
+4. **Receive Custom JWT**: Backend akan mengembalikan custom JWT token yang kompatibel dengan sistem auth manual (format: `{ user_id, role, desa_id, email }`)
+5. **Store Custom Token**: Simpan custom JWT token ini dan gunakan untuk semua request berikutnya ke backend (header: `Authorization: Bearer <token>`)
+6. **Profile Completion Check**: Dari response `/api/auth/oauth-exchange`, cek field `profile_completed`. Kalau `false`, redirect user ke form lengkapi profil sebelum lanjut ke aplikasi utama.
+
+**Catatan Penting**:
+- Token Supabase HANYA dipakai sekali saat exchange, tidak dipakai lagi setelahnya
+- Custom JWT yang dikembalikan dari `/api/auth/oauth-exchange` memiliki struktur IDENTIK dengan token dari login manual, sehingga middleware `verifyToken` yang sudah ada TIDAK perlu diubah
+- Endpoint `/api/auth/oauth-exchange` dilindungi rate limiting (10 request per menit per IP) untuk mencegah abuse
+
+## Refresh Token Flow (Persistent Login)
+
+Untuk implementasi refresh token di frontend agar user tetap login tanpa perlu re-authentication:
+
+1. **Login (Manual atau OAuth)**:
+   - Setelah login sukses (manual atau via `/api/auth/oauth-exchange`), simpan `access_token` dan `refresh_token` dari response
+   - **Storage Recommendation**: Simpan `access_token` di memory/state (React state, Redux, Zustand) dan `refresh_token` di httpOnly cookie jika infrastruktur mendukung, atau localStorage jika belum ada setup cookie server-side
+   - **Trade-off**: httpOnly cookie lebih aman dari XSS attack, tapi membutuhkan setup server-side cookie. localStorage lebih mudah implementasikan tapi rentan XSS jika ada vulnerability di frontend
+
+2. **Axios/Fetch Interceptor**:
+   - Setup interceptor untuk otomatis handle 401 (access token expired)
+   - Saat request kena 401:
+     a. Panggil `POST /api/auth/refresh` dengan `refresh_token` tersimpan
+     b. Jika success: simpan `access_token` baru, retry request asli
+     c. Jika fail (401): redirect ke halaman login, hapus kedua token dari storage
+
+3. **Logout**:
+   - Panggil `POST /api/auth/logout` dengan `refresh_token`
+   - Hapus `access_token` dan `refresh_token` dari storage
+   - Redirect ke halaman login
+
+**Catatan Penting**:
+- Access token berdurasi 2 jam, refresh token berdurasi 30 hari
+- Refresh token disimpan sebagai SHA-256 hash di database (bukan plain text) untuk keamanan
+- Endpoint `/api/auth/refresh` dan `/api/auth/logout` juga dilindungi rate limiting (10 request per menit per IP)
+- Housekeeping: Jalankan query `DELETE FROM refresh_tokens WHERE expires_at < NOW()` secara berkala (misal bulanan) untuk membersihkan token expired

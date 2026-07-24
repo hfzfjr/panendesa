@@ -13,6 +13,7 @@ import fairShareRouter from './api/routes/fairShare';
 import auditLogRouter from './api/routes/auditLog';
 import economicImpactRouter from './api/routes/economicImpact';
 import komoditasRouter from './api/routes/komoditas';
+import usersRouter from './api/routes/users';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,6 +35,7 @@ app.get('/', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
 app.use('/api/stok-estimasi', stokEstimasiRouter);
 app.use('/api/intake-grading', intakeGradingRouter);
 app.use('/api/trust-score', trustScoreRouter);

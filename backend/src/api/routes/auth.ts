@@ -2,6 +2,14 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { supabase } from '../../lib/supabase';
+import { authRateLimit } from '../middlewares/rateLimitMiddleware';
+import {
+  generateRefreshToken,
+  storeRefreshToken,
+  validateRefreshToken,
+  revokeRefreshToken,
+  ACCESS_TOKEN_EXPIRY
+} from '../../lib/refreshToken';
 
 const router = Router();
 
@@ -11,8 +19,97 @@ if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is not set');
 }
 
+// POST /api/auth/oauth-exchange
+// Exchange Supabase OAuth access token for custom JWT token
+// This allows OAuth users to use the same authentication system as manual login users
+router.post('/oauth-exchange', authRateLimit, async (req: Request, res: Response) => {
+  try {
+    const { access_token } = req.body;
+
+    // Validation
+    if (!access_token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Access token diperlukan'
+      });
+    }
+
+    // Verify the Supabase access token by getting user info
+    // This validates the token signature and expiration with Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser(access_token);
+
+    if (authError || !user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Token Supabase tidak valid atau sudah kadaluarsa'
+      });
+    }
+
+    // Get the auth_id (UUID) from Supabase user
+    const auth_id = user.id;
+
+    // Query custom users table by auth_id
+    const { data: customUser, error: userError } = await supabase
+      .from('users')
+      .select('id, nama, role, desa_id, email, profile_completed, skor_konsistensi')
+      .eq('auth_id', auth_id)
+      .single();
+
+    if (userError || !customUser) {
+      return res.status(404).json({
+        success: false,
+        error: 'User tidak ditemukan. Silakan coba lagi atau hubungi admin jika masalah berlanjut.'
+      });
+    }
+
+    // Generate custom JWT access token with IDENTICAL payload structure to manual login
+    const accessToken = jwt.sign(
+      {
+        user_id: customUser.id,
+        role: customUser.role,
+        desa_id: customUser.desa_id,
+        email: customUser.email
+      },
+      JWT_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRY }
+    );
+
+    // Generate refresh token (long-lived: 30 days)
+    const refreshToken = generateRefreshToken();
+    const refreshStored = await storeRefreshToken(customUser.id, refreshToken);
+
+    if (!refreshStored) {
+      console.error('Failed to store refresh token for user:', customUser.id);
+      // Continue anyway - user can still login, just won't have refresh capability
+    }
+
+    // Return success response with both tokens and user data
+    return res.status(200).json({
+      success: true,
+      data: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        user: {
+          id: customUser.id,
+          nama: customUser.nama,
+          role: customUser.role,
+          desa_id: customUser.desa_id,
+          email: customUser.email,
+          profile_completed: customUser.profile_completed
+        }
+      }
+    });
+  } catch (error) {
+    console.error('OAuth exchange error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', authRateLimit, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
@@ -38,6 +135,14 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
+    // SECURITY: Reject login if password_hash is NULL (OAuth users must use OAuth flow)
+    if (!user.password_hash) {
+      return res.status(401).json({
+        success: false,
+        error: 'Email atau password tidak valid'
+      });
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
@@ -51,25 +156,40 @@ router.post('/login', async (req: Request, res: Response) => {
     // Strip password_hash from user object before response
     const { password_hash, ...userSafe } = user;
 
-    // Generate JWT token
-    const token = jwt.sign(
+    // Generate JWT access token (short-lived: 2 hours)
+    const accessToken = jwt.sign(
       {
         user_id: userSafe.id,
         role: userSafe.role,
-        desa_id: userSafe.desa_id
+        desa_id: userSafe.desa_id,
+        email: userSafe.email
       },
       JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: ACCESS_TOKEN_EXPIRY }
     );
 
-    // Return success response
+    // Generate refresh token (long-lived: 30 days)
+    const refreshToken = generateRefreshToken();
+    const refreshStored = await storeRefreshToken(userSafe.id, refreshToken);
+
+    if (!refreshStored) {
+      console.error('Failed to store refresh token for user:', userSafe.id);
+      // Continue anyway - user can still login, just won't have refresh capability
+    }
+
+    // Return success response with both tokens
     return res.status(200).json({
       success: true,
       data: {
-        token,
-        role: userSafe.role,
-        user_id: userSafe.id,
-        desa_id: userSafe.desa_id
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        user: {
+          id: userSafe.id,
+          nama: userSafe.nama,
+          role: userSafe.role,
+          desa_id: userSafe.desa_id,
+          email: userSafe.email
+        }
       }
     });
   } catch (error) {
@@ -81,13 +201,116 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/auth/refresh
+// Exchange refresh token for new access token
+router.post('/refresh', authRateLimit, async (req: Request, res: Response) => {
+  try {
+    const { refresh_token } = req.body;
+
+    // Validation
+    if (!refresh_token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Refresh token diperlukan'
+      });
+    }
+
+    // Validate refresh token and get user ID
+    const userId = await validateRefreshToken(refresh_token);
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Refresh token tidak valid, silakan login ulang'
+      });
+    }
+
+    // Query user from database
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('id, nama, role, desa_id, email')
+      .eq('id', userId)
+      .single();
+
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User tidak ditemukan, silakan login ulang'
+      });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      {
+        user_id: user.id,
+        role: user.role,
+        desa_id: user.desa_id,
+        email: user.email
+      },
+      JWT_SECRET,
+      { expiresIn: ACCESS_TOKEN_EXPIRY }
+    );
+
+    // Return new access token
+    return res.status(200).json({
+      success: true,
+      data: {
+        access_token: newAccessToken
+      }
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// POST /api/auth/logout
+// Revoke refresh token
+router.post('/logout', authRateLimit, async (req: Request, res: Response) => {
+  try {
+    const { refresh_token } = req.body;
+
+    // Validation
+    if (!refresh_token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Refresh token diperlukan'
+      });
+    }
+
+    // Revoke the refresh token
+    const revoked = await revokeRefreshToken(refresh_token);
+
+    if (!revoked) {
+      // Token might not exist or already revoked - that's okay for logout
+      console.log('Refresh token not found or already revoked during logout');
+    }
+
+    // Return success
+    return res.status(200).json({
+      success: true,
+      message: 'Logout berhasil'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
 // POST /api/auth/register
-router.post('/register', async (req: Request, res: Response) => {
+// SECURITY: Self-registration is hardcoded to role='pembeli' to prevent privilege escalation
+// For other roles, admin must create accounts via a separate protected endpoint
+router.post('/register', authRateLimit, async (req: Request, res: Response) => {
   try {
     const {
       email,
       password,
-      role,
       nama_lengkap,
       nik,
       desa_id,
@@ -99,20 +322,14 @@ router.post('/register', async (req: Request, res: Response) => {
       nomor_hp
     } = req.body;
 
-    // Basic validation
-    if (!email || !password || !role) {
-      return res.status(400).json({
-        success: false,
-        error: 'Email, password, dan role diperlukan'
-      });
-    }
+    // SECURITY: Strip role from request body to prevent self-assignment
+    const { role, ...safeBody } = req.body;
 
-    // Validate role
-    const validRoles = ['petani', 'petugas_kopdes', 'pembeli', 'admin'];
-    if (!validRoles.includes(role)) {
+    // Basic validation
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        error: 'Role tidak valid'
+        error: 'Email dan password diperlukan'
       });
     }
 
@@ -133,48 +350,17 @@ router.post('/register', async (req: Request, res: Response) => {
     // Hash password
     const password_hash = await bcrypt.hash(password, 10);
 
-    // Role-specific validation and data preparation
+    // SECURITY: Hardcode role to 'pembeli' for self-registration
     let userData: any = {
       email,
       password_hash,
-      role,
+      role: 'pembeli', // HARDCODED: Self-registration always creates 'pembeli'
       nama: nama_lengkap || email.split('@')[0],
       created_at: new Date().toISOString()
     };
 
-    // Handle role-specific fields
-    if (role === 'petani') {
-      if (!nama_lengkap || !nik) {
-        return res.status(400).json({
-          success: false,
-          error: 'Nama lengkap dan NIK diperlukan untuk petani'
-        });
-      }
-      userData.nama = nama_lengkap;
-      // desa_id is optional for petani (can be set later)
-      if (desa_id) {
-        userData.desa_id = desa_id;
-      }
-    } else if (role === 'petugas_kopdes') {
-      if (!nama_koperasi || !nomor_badan_hukum || !nama_penanggung_jawab) {
-        return res.status(400).json({
-          success: false,
-          error: 'Data koperasi tidak lengkap'
-        });
-      }
-      userData.nama = nama_penanggung_jawab;
-      // For kopdes, we need to handle desa_id - this is a simplified version
-      // In production, you'd need to create/find the desa and kopdes records
-      if (desa_id) {
-        userData.desa_id = desa_id;
-      }
-    } else if (role === 'pembeli') {
-      if (!nama_lengkap) {
-        return res.status(400).json({
-          success: false,
-          error: 'Nama lengkap diperlukan untuk pembeli'
-        });
-      }
+    // Handle pembeli-specific fields (only role allowed for self-registration)
+    if (nama_lengkap) {
       userData.nama = nama_lengkap;
     }
 

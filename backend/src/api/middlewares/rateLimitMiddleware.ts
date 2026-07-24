@@ -37,3 +37,25 @@ export const intakeGradingRateLimit = rateLimit({
     return shouldSkip;
   }
 });
+
+// Rate limiter for auth endpoints (login, register, oauth-exchange)
+// Uses IP-based limiting for unauthenticated requests
+export const authRateLimit = rateLimit({
+  windowMs: WINDOW_MS,
+  max: 10, // Stricter limit for auth endpoints (10 requests per minute per IP)
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false, // Count all requests including successful ones
+  skip: (req: Request) => {
+    // Skip rate limiting during tests
+    return process.env.NODE_ENV === 'test';
+  },
+  handler: (req: Request, res: Response) => {
+    console.log(`[Rate Limit Auth] Limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      success: false,
+      error: 'Terlalu banyak percobaan login. Maksimal 10 percobaan per menit. Silakan tunggu sebentar.'
+    });
+  }
+});
+
