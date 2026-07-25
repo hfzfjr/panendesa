@@ -14,6 +14,7 @@ import auditLogRouter from './api/routes/auditLog';
 import economicImpactRouter from './api/routes/economicImpact';
 import komoditasRouter from './api/routes/komoditas';
 import usersRouter from './api/routes/users';
+import desaRouter from './api/routes/desa';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -45,6 +46,7 @@ app.use('/api/fair-share', fairShareRouter);
 app.use('/api/audit-log', auditLogRouter);
 app.use('/api/economic-impact', economicImpactRouter);
 app.use('/api/komoditas', komoditasRouter);
+app.use('/api/desa', desaRouter);
 
 // Start server
 app.listen(PORT, () => {

@@ -55,6 +55,13 @@ Response: riwayat intake untuk audit.
 Role: semua role terautentikasi
 Response: `{ "success": true, "data": { "kapasitas_estimasi_kg": number, "kapasitas_tervalidasi_kg": number, "skor_konsistensi_desa": number } }`
 
+## Desa
+
+### GET /api/desa
+Role: semua role terautentikasi
+Response: `{ "success": true, "data": [ { "desa_id": number, "nama_desa": string, "latitude": number | null, "longitude": number | null, "skor_konsistensi": number, "kapasitas_estimasi_kg": number, "kapasitas_tervalidasi_kg": number } ] }`
+Catatan: Endpoint ini menyertakan kapasitas estimasi dan tervalidasi untuk setiap desa dalam satu response (menggunakan `getAllDesaCapacity` dari capacity-engine) untuk menghindari N+1 request di marketplace.
+
 ## Trust Score (Fitur Unggulan)
 
 ### GET /api/trust-score/petani/:petani_id
