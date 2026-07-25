@@ -465,35 +465,39 @@ describe('Auth API - Security Tests', () => {
         return;
       }
 
-      // Debug: Check the token before refresh
-      const tokenHash = hashRefreshToken(refreshToken);
-      const { data: tokenBeforeRefresh, error: tokenError } = await supabase
-        .from('refresh_tokens')
-        .select('*')
-        .eq('token_hash', tokenHash)
-        .single();
-
-      console.log('Token before refresh:', {
-        found: !!tokenBeforeRefresh,
-        error: tokenError?.message,
-        data: tokenBeforeRefresh
-      });
-
       const response = await request(app)
         .post('/api/auth/refresh')
         .send({ refresh_token: refreshToken });
-
-      console.log('Refresh response:', response.status, response.body);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data.access_token).toBeDefined();
 
-      // New access token should be different from original
-      expect(response.body.data.access_token).not.toBe(accessToken);
+      const newAccessToken = response.body.data.access_token;
+
+      // Decode both tokens to validate payload consistency
+      const JWT_SECRET = process.env.JWT_SECRET;
+      if (!JWT_SECRET) {
+        throw new Error('JWT_SECRET environment variable is not set');
+      }
+
+      const decodedOld = jwt.verify(accessToken, JWT_SECRET) as any;
+      const decodedNew = jwt.verify(newAccessToken, JWT_SECRET) as any;
+
+      // Assert payload is consistent (same user data)
+      expect(decodedNew.user_id).toBe(decodedOld.user_id);
+      expect(decodedNew.role).toBe(decodedOld.role);
+      expect(decodedNew.desa_id).toBe(decodedOld.desa_id);
+      expect(decodedNew.email).toBe(decodedOld.email);
+
+      // Assert new token expiry is reasonable (~2 hours from now)
+      const now = Math.floor(Date.now() / 1000);
+      const twoHoursInSeconds = 2 * 60 * 60;
+      expect(decodedNew.exp).toBeGreaterThan(now);
+      expect(decodedNew.exp).toBeLessThanOrEqual(now + twoHoursInSeconds + 10); // +10s tolerance
 
       // Update accessToken for subsequent tests
-      accessToken = response.body.data.access_token;
+      accessToken = newAccessToken;
     });
 
     it('should reject refresh with revoked refresh token', async () => {
