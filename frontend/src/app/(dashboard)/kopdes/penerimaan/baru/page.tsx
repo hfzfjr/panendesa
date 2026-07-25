@@ -1,23 +1,181 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  ChevronRight, 
-  MapPin, 
-  Camera, 
-  Sparkles, 
-  Edit2, 
+import { useRouter } from "next/navigation";
+import {
+  ChevronRight,
+  MapPin,
+  Camera,
+  Sparkles,
+  Edit2,
   Save,
-  AlertCircle
+  AlertCircle,
+  Upload
 } from "lucide-react";
+import { authStorage } from "@/lib/auth";
+import { apiClient } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/ErrorState";
+
+interface StokEstimasi {
+  id: number;
+  petani_id: number;
+  komoditas_id: number;
+  jumlah_kg: number;
+  tanggal_target_panen: string;
+  status: string;
+}
 
 export default function IntakeBaruPage() {
+  const router = useRouter();
   const [selectedGrade, setSelectedGrade] = useState("A");
-  
+  const [selectedStokId, setSelectedStokId] = useState<number | null>(null);
+  const [beratAktual, setBeratAktual] = useState("");
+  const [foto, setFoto] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [stokList, setStokList] = useState<StokEstimasi[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<{ code?: number; message?: string } | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const fetchStok = async () => {
+      const user = authStorage.getUser();
+      if (!user?.desa_id) {
+        setError({ code: 403, message: 'Data desa tidak ditemukan' });
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await apiClient.getStokEstimasiDesa(user.desa_id);
+        if (response.success && response.data) {
+          const pendingStok = response.data.filter((item: StokEstimasi) => item.status === 'menunggu_panen');
+          setStokList(pendingStok);
+        } else {
+          setError({ message: response.error || 'Gagal mengambil data stok' });
+        }
+      } catch (err) {
+        setError({ message: 'Terjadi kesalahan koneksi' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStok();
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side validation
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (!validTypes.includes(file.type)) {
+      setError({ message: 'Format file harus JPG atau PNG' });
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setError({ message: 'Ukuran file maksimal 10MB' });
+      return;
+    }
+
+    setFoto(file);
+    setError(null);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedStokId || !foto || !beratAktual) {
+      setError({ message: 'Mohon lengkapi semua data yang diperlukan' });
+      return;
+    }
+
+    const beratNum = parseFloat(beratAktual);
+    if (isNaN(beratNum) || beratNum <= 0) {
+      setError({ message: 'Berat aktual harus lebih dari 0' });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('stok_estimasi_id', selectedStokId.toString());
+      formData.append('foto', foto);
+      formData.append('berat_aktual_kg', beratNum.toString());
+
+      if (selectedGrade !== 'A') {
+        formData.append('grade_override_manual', selectedGrade);
+      }
+
+      const response = await apiClient.postIntakeGrading(formData);
+
+      if (response.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/kopdes/penerimaan');
+        }, 2000);
+      } else {
+        setError({ message: response.error || 'Gagal submit intake grading' });
+      }
+    } catch (err) {
+      setError({ message: 'Terjadi kesalahan koneksi' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+        <div className="h-8 bg-gray-200 rounded animate-pulse w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="h-24 bg-gray-200 rounded-2xl animate-pulse" />
+          <div className="h-24 bg-gray-200 rounded-2xl animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <ErrorState code={error.code} message={error.message} onRetry={() => window.location.reload()} />
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Save className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-green-800 mb-2">Intake Berhasil Disimpan!</h2>
+          <p className="text-green-600">Mengalihkan ke halaman penerimaan...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8 pb-32 md:pb-8 min-h-screen">
-      
+
       {/* Header & Breadcrumbs */}
       <div>
         <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500 font-medium mb-2">
@@ -35,28 +193,53 @@ export default function IntakeBaruPage() {
         </p>
       </div>
 
-      {/* Top Section: Pilih Petani & Lokasi Lahan */}
+      {/* Top Section: Pilih Stok Estimasi & Info */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <div className="bg-white p-5 md:p-6 border border-gray-200 rounded-2xl shadow-sm">
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">PILIH PETANI</label>
-          <select className="w-full bg-white border border-gray-300 text-gray-900 py-3.5 px-4 rounded-xl outline-none focus:border-primary-dark font-medium shadow-sm appearance-none">
-            <option>Pak Budi - Cabai Merah</option>
-            <option>Pak Andi - Bawang Merah</option>
-            <option>Ibu Siti - Tomat Hijau</option>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">PILIH STOK ESTIMASI</label>
+          <select
+            className="w-full bg-white border border-gray-300 text-gray-900 py-3.5 px-4 rounded-xl outline-none focus:border-primary-dark font-medium shadow-sm appearance-none"
+            value={selectedStokId || ""}
+            onChange={(e) => setSelectedStokId(e.target.value ? parseInt(e.target.value) : null)}
+          >
+            <option value="">Pilih stok estimasi...</option>
+            {stokList.map((stok) => (
+              <option key={stok.id} value={stok.id}>
+                Petani #{stok.petani_id} - Komoditas #{stok.komoditas_id} - {stok.jumlah_kg} kg
+              </option>
+            ))}
           </select>
+          {stokList.length === 0 && (
+            <p className="text-xs text-gray-500 mt-2">Tidak ada stok estimasi dengan status "menunggu_panen"</p>
+          )}
         </div>
-        
+
         <div className="bg-white p-5 md:p-6 border border-gray-200 rounded-2xl shadow-sm">
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">LOKASI LAHAN</label>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center shrink-0">
-              <MapPin className="w-5 h-5 text-primary-dark" />
-            </div>
-            <div>
-              <h3 className="font-bold text-green-800 text-lg">Blok C2</h3>
-              <p className="text-gray-500 font-medium">Desa Sukatani</p>
-            </div>
-          </div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">INFO STOK</label>
+          {selectedStokId ? (() => {
+            const selectedStok = stokList.find(s => s.id === selectedStokId);
+            return selectedStok ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center shrink-0">
+                    <MapPin className="w-4 h-4 text-primary-dark" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">Petani #{selectedStok.petani_id}</p>
+                    <p className="text-gray-500 text-xs">Komoditas #{selectedStok.komoditas_id}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Estimasi: <span className="font-bold text-primary-dark">{selectedStok.jumlah_kg.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kg</span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Target Panen: <span className="font-medium">{selectedStok.tanggal_target_panen}</span>
+                </p>
+              </div>
+            ) : null;
+          })() : (
+            <p className="text-gray-400 text-sm">Pilih stok estimasi untuk melihat detail</p>
+          )}
         </div>
       </div>
 
@@ -67,31 +250,42 @@ export default function IntakeBaruPage() {
             <Camera className="w-6 h-6" />
             Dokumentasi Produk
           </h2>
-          <button className="bg-primary-dark hover:bg-green-800 text-white font-bold py-3 px-6 rounded-full transition-colors flex items-center justify-center gap-2 shadow-sm text-sm">
-            <Camera className="w-4 h-4" />
-            AMBIL FOTO
-          </button>
+          <label className="cursor-pointer bg-primary-dark hover:bg-green-800 text-white font-bold py-3 px-6 rounded-full transition-colors flex items-center justify-center gap-2 shadow-sm text-sm">
+            <Upload className="w-4 h-4" />
+            UPLOAD FOTO
+            <input type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleFileChange} className="hidden" />
+          </label>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="h-48 md:h-56 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-            <img src="https://images.unsplash.com/photo-1596489379201-92f7678564e9?q=80&w=600&auto=format&fit=crop" alt="Chili harvest" className="w-full h-full object-cover" />
-          </div>
-          <div className="h-48 md:h-56 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-            <img src="https://images.unsplash.com/photo-1627042633145-b780d842ba45?q=80&w=600&auto=format&fit=crop" alt="Chili weighing" className="w-full h-full object-cover" />
-          </div>
-          <div className="h-48 md:h-56 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-            <img src="https://images.unsplash.com/photo-1574484284002-952d92456975?q=80&w=600&auto=format&fit=crop" alt="Chili close up" className="w-full h-full object-cover" />
-          </div>
+          {fotoPreview ? (
+            <div className="h-48 md:h-56 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 col-span-1 sm:col-span-3">
+              <img src={fotoPreview} alt="Uploaded product" className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <div className="h-48 md:h-56 bg-gray-100 rounded-xl border border-gray-200 flex items-center justify-center col-span-1 sm:col-span-3">
+              <div className="text-center text-gray-400">
+                <Camera className="w-12 h-12 mx-auto mb-2" />
+                <p className="text-sm font-medium">Upload foto produk</p>
+                <p className="text-xs">JPG/PNG, maks 10MB</p>
+              </div>
+            </div>
+          )}
         </div>
+        {error && error.message?.includes('file') && (
+          <div className="mt-4 bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3">
+            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-red-600 text-sm font-medium">{error.message}</p>
+          </div>
+        )}
       </div>
 
       {/* Bottom Grid: AI Grade vs Final Weight */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-        
+
         {/* Left Column: AI & Override */}
         <div className="lg:col-span-8 space-y-6">
-          
+
           {/* AI Recommendation */}
           <div className="bg-green-50/50 p-5 md:p-6 border border-green-100 rounded-2xl shadow-sm">
             <div className="flex items-center justify-between mb-6">
@@ -112,15 +306,15 @@ export default function IntakeBaruPage() {
             <div className="grid grid-cols-3 gap-3 md:gap-4">
               <div className="bg-white p-4 rounded-xl border border-green-50 shadow-sm">
                 <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">WARNA</p>
-                <p className="font-bold text-primary-dark text-base md:text-lg leading-tight">98% Solid<br/>Red</p>
+                <p className="font-bold text-primary-dark text-base md:text-lg leading-tight">98% Solid<br />Red</p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-green-50 shadow-sm">
                 <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">UKURAN</p>
-                <p className="font-bold text-primary-dark text-base md:text-lg leading-tight">Avg<br/>12.5 cm</p>
+                <p className="font-bold text-primary-dark text-base md:text-lg leading-tight">Avg<br />12.5 cm</p>
               </div>
               <div className="bg-white p-4 rounded-xl border border-green-50 shadow-sm">
                 <p className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">CACAT</p>
-                <p className="font-bold text-primary-dark text-base md:text-lg leading-tight">0.2%<br/>Minor</p>
+                <p className="font-bold text-primary-dark text-base md:text-lg leading-tight">0.2%<br />Minor</p>
               </div>
             </div>
           </div>
@@ -133,9 +327,9 @@ export default function IntakeBaruPage() {
                 <Edit2 className="w-3 h-3" /> OVERRIDE
               </button>
             </div>
-            
+
             <div className="grid grid-cols-3 gap-4">
-              <button 
+              <button
                 onClick={() => setSelectedGrade("A")}
                 className={`p-4 md:p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${selectedGrade === "A" ? 'border-primary-dark bg-green-50' : 'border-gray-100 hover:border-green-200'}`}
               >
@@ -145,7 +339,7 @@ export default function IntakeBaruPage() {
                 <span className="text-xs font-bold text-gray-600 uppercase">PREMIUM</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => setSelectedGrade("B")}
                 className={`p-4 md:p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${selectedGrade === "B" ? 'border-primary-dark bg-green-50' : 'border-gray-100 hover:border-green-200'}`}
               >
@@ -155,7 +349,7 @@ export default function IntakeBaruPage() {
                 <span className="text-xs font-bold text-gray-600 uppercase">REGULAR</span>
               </button>
 
-              <button 
+              <button
                 onClick={() => setSelectedGrade("C")}
                 className={`p-4 md:p-6 rounded-2xl border-2 transition-all flex flex-col items-center gap-3 ${selectedGrade === "C" ? 'border-primary-dark bg-green-50' : 'border-gray-100 hover:border-green-200'}`}
               >
@@ -170,52 +364,58 @@ export default function IntakeBaruPage() {
 
         {/* Right Column: Weight & Payment Estimation */}
         <div className="lg:col-span-4 space-y-6">
-          
+
           {/* Berat Aktual */}
           <div className="bg-white p-5 md:p-6 border border-gray-200 rounded-2xl shadow-sm">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">BERAT AKTUAL</h3>
-            <div className="flex items-baseline gap-2 mb-6">
-              <span className="text-5xl md:text-6xl font-black text-primary-dark tracking-tighter">195</span>
-              <span className="text-xl font-bold text-gray-300 uppercase">KG</span>
-            </div>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">BERAT AKTUAL (KG)</h3>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={beratAktual}
+              onChange={(e) => setBeratAktual(e.target.value)}
+              className="w-full text-5xl md:text-6xl font-black text-primary-dark tracking-tighter bg-transparent outline-none border-b-2 border-gray-200 focus:border-primary-dark transition-colors"
+              placeholder="0"
+            />
 
-            {/* Alert Box */}
-            <div className="bg-red-50/50 border border-red-100 rounded-xl p-4 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-bold text-red-700 text-sm mb-1">Selisih Estimasi!</h4>
-                <p className="text-red-600 text-xs font-medium leading-relaxed">
-                  Berat 195 kg berbeda {">"}5% dari estimasi awal (210 kg).
-                </p>
-              </div>
-            </div>
+            {selectedStokId && (() => {
+              const selectedStok = stokList.find(s => s.id === selectedStokId);
+              const beratNum = parseFloat(beratAktual);
+              if (selectedStok && beratNum > 0) {
+                const diff = Math.abs((beratNum - selectedStok.jumlah_kg) / selectedStok.jumlah_kg) * 100;
+                if (diff > 5) {
+                  return (
+                    <div className="bg-red-50/50 border border-red-100 rounded-xl p-4 flex gap-3 mt-4">
+                      <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-bold text-red-700 text-sm mb-1">Selisih Estimasi!</h4>
+                        <p className="text-red-600 text-xs font-medium leading-relaxed">
+                          Berat {beratNum.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kg berbeda &gt;5% dari estimasi ({selectedStok.jumlah_kg.toLocaleString('id-ID', { maximumFractionDigits: 2 })} kg).
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+              }
+              return null;
+            })()}
           </div>
 
-          {/* Estimasi Pembayaran */}
-          <div className="bg-green-50/50 border border-green-100 rounded-2xl p-5 md:p-6 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary-dark/5 rounded-bl-[100px]"></div>
-            
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-6">ESTIMASI PEMBAYARAN</h3>
-            
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500 font-bold">HARGA DASAR</span>
-                <span className="font-bold text-gray-900">Rp 35.000 / kg</span>
+          {/* Info Card */}
+          <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 md:p-6 shadow-sm">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">INFORMASI</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                <p className="text-gray-700">Grade akan ditentukan oleh AI Vision berdasarkan foto yang diupload</p>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500 font-bold">TOTAL BRUTO</span>
-                <span className="font-bold text-green-700">Rp 6.825.000</span>
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                <p className="text-gray-700">Anda dapat override grade secara manual jika hasil AI meragukan</p>
               </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-red-500 font-bold">POTONGAN ADMIN</span>
-                <span className="font-bold text-red-600">-Rp 136.500</span>
-              </div>
-            </div>
-
-            <div className="border-t border-green-200 pt-4">
-              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">TOTAL BERSIH</h3>
-              <div className="text-2xl md:text-3xl font-black text-primary-dark">
-                Rp 6.688.500
+              <div className="flex items-start gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                <p className="text-gray-700">Pastikan berat aktual sesuai dengan hasil timbangan</p>
               </div>
             </div>
           </div>
@@ -225,10 +425,32 @@ export default function IntakeBaruPage() {
       </div>
 
       {/* Simpan Button */}
-      <button className="w-full bg-primary-dark hover:bg-green-800 text-white font-bold text-base md:text-lg py-5 rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg mt-8 mb-4">
-        <Save className="w-6 h-6" />
-        SIMPAN INTAKE LAPANGAN
-      </button>
+      <form onSubmit={handleSubmit}>
+        <button
+          type="submit"
+          disabled={isSubmitting || !selectedStokId || !foto || !beratAktual}
+          className="w-full bg-primary-dark hover:bg-green-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold text-base md:text-lg py-5 rounded-2xl transition-colors flex items-center justify-center gap-3 shadow-lg mt-8 mb-4"
+        >
+          {isSubmitting ? (
+            <>
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Menyimpan...
+            </>
+          ) : (
+            <>
+              <Save className="w-6 h-6" />
+              SIMPAN INTAKE LAPANGAN
+            </>
+          )}
+        </button>
+      </form>
+
+      {error && !error.message?.includes('file') && (
+        <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-red-600 text-sm font-medium">{error.message}</p>
+        </div>
+      )}
 
     </div>
   );

@@ -1,19 +1,84 @@
-import React from "react";
+'use client';
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  Package, 
-  Tractor, 
-  Truck, 
-  Users, 
-  ClipboardList, 
+import {
+  Package,
+  Tractor,
+  Truck,
+  Users,
+  ClipboardList,
   AlertCircle,
   TrendingUp,
   CheckCircle2
 } from "lucide-react";
+import { authStorage } from "@/lib/auth";
+import { apiClient } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/ErrorState";
+import { Toast } from "@/components/ui/Toast";
+import { useAccessDeniedToast } from "@/hooks/useAccessDeniedToast";
+
+interface CapacityData {
+  kapasitas_estimasi_kg: number;
+  kapasitas_tervalidasi_kg: number;
+  skor_konsistensi_desa: number;
+}
 
 export default function KopdesDashboard() {
+  const { showToast, handleClose } = useAccessDeniedToast();
+  const [capacity, setCapacity] = useState<CapacityData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<{ code?: number; message?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchCapacity = async () => {
+      const user = authStorage.getUser();
+      if (!user?.desa_id) {
+        setError({ code: 403, message: 'Data desa tidak ditemukan' });
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await apiClient.getCapacity(user.desa_id);
+        if (response.success && response.data) {
+          setCapacity(response.data);
+        } else {
+          setError({ message: response.error || 'Gagal mengambil data kapasitas' });
+        }
+      } catch (err) {
+        setError({ message: 'Terjadi kesalahan koneksi' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCapacity();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm h-36 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <ErrorState code={error.code} message={error.message} onRetry={() => window.location.reload()} />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+      {showToast && <Toast message="Anda tidak memiliki akses ke halaman itu" onClose={handleClose} type="warning" />}
       {/* Header */}
       <div>
         <h1 className="text-2xl md:text-3xl font-extrabold text-primary-dark tracking-tight mb-1">
@@ -29,18 +94,17 @@ export default function KopdesDashboard() {
         {/* Stok Hari Ini */}
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between h-36">
           <div className="flex justify-between items-start">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">STOK HARI INI</h3>
+            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">STOK TERVERIFIKASI</h3>
             <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
               <Package className="w-5 h-5 text-primary-dark" />
             </div>
           </div>
           <div>
             <div className="text-3xl font-black text-gray-900 flex items-baseline gap-1">
-              1.420 <span className="text-sm font-bold text-gray-500">kg</span>
+              {capacity?.kapasitas_tervalidasi_kg?.toLocaleString('id-ID', { maximumFractionDigits: 0 }) || 0} <span className="text-sm font-bold text-gray-500">kg</span>
             </div>
-            <div className="flex items-center gap-1 text-xs font-bold text-green-600 mt-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>+12% vs Kemarin</span>
+            <div className="flex items-center gap-1 text-xs font-bold text-gray-500 mt-1">
+              <span>Estimasi: {capacity?.kapasitas_estimasi_kg?.toLocaleString('id-ID', { maximumFractionDigits: 0 }) || 0} kg</span>
             </div>
           </div>
         </div>
@@ -102,7 +166,7 @@ export default function KopdesDashboard() {
 
       {/* Main Grid Area */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
-        
+
         {/* Left Column - Intake Hari Ini */}
         <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between mb-2">
@@ -200,7 +264,7 @@ export default function KopdesDashboard() {
                   CEK HARGA
                 </Link>
               </div>
-              
+
               <div className="space-y-2 mb-4 pl-2">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500">Estimasi Volume:</span>
@@ -230,7 +294,7 @@ export default function KopdesDashboard() {
                   CEK HARGA
                 </Link>
               </div>
-              
+
               <div className="space-y-2 mb-4 pl-2">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500">Estimasi Volume:</span>

@@ -1,22 +1,106 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, Share2, Receipt, Users, CheckCircle2, Building2 } from "lucide-react";
+import { authStorage } from "@/lib/auth";
+import { apiClient } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/ErrorState";
+
+interface FairShareDetail {
+  id: number;
+  order_id: number;
+  petani_id: number;
+  kontribusi_kg: number;
+  grade: string;
+  jumlah_diterima: number;
+  fee_kopdes_persen: number;
+  fee_kopdes_nominal: number;
+  harga_final_per_kg: number;
+  created_at: string;
+  komoditas_nama?: string;
+  pembeli_nama?: string;
+}
 
 export default function DetailBagiHasilPage() {
+  const params = useParams();
+  const router = useRouter();
+  const [fairShare, setFairShare] = useState<FairShareDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<{ code?: number; message?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchFairShareDetail = async () => {
+      const user = authStorage.getUser();
+      if (!user?.user_id) {
+        setError({ code: 403, message: 'User tidak ditemukan' });
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await apiClient.getFairSharePetani(user.user_id);
+        if (response.success && response.data) {
+          const item = response.data.find((d: FairShareDetail) => d.id === parseInt(params.id as string));
+          if (item) {
+            setFairShare(item);
+          } else {
+            setError({ code: 404, message: 'Data tidak ditemukan' });
+          }
+        } else {
+          setError({ message: response.error || 'Gagal mengambil detail fair share' });
+        }
+      } catch (err) {
+        setError({ message: 'Terjadi kesalahan koneksi' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFairShareDetail();
+  }, [params.id]);
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="h-12 bg-gray-200 rounded animate-pulse w-64" />
+        <div className="h-8 bg-gray-200 rounded animate-pulse w-48" />
+        <div className="bg-gray-200 rounded-lg h-32 animate-pulse" />
+        <div className="bg-gray-200 rounded-lg h-64 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <ErrorState code={error.code} message={error.message} onRetry={() => router.back()} />
+      </div>
+    );
+  }
+
+  if (!fairShare) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <ErrorState code={404} message="Data tidak ditemukan" onRetry={() => router.back()} />
+      </div>
+    );
+  }
+
+  const subTotal = fairShare.harga_final_per_kg * fairShare.kontribusi_kg;
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 pb-32 md:pb-8">
       <div className="pt-2">
-        <Link href="/dashboard/petani/pendapatan" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold mb-6 transition-colors">
+        <Link href="/petani/pendapatan" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 font-bold mb-6 transition-colors">
           <ArrowLeft className="w-5 h-5" />
           <span>Kembali ke Buku Tabungan</span>
         </Link>
         <h1 className="text-2xl md:text-3xl font-extrabold text-primary-dark uppercase tracking-tight mb-2">
-          NOTA PEMBAYARAN CABAI
+          NOTA PEMBAYARAN {fairShare.komoditas_nama?.toUpperCase() || 'KOMODITAS'}
         </h1>
         <p className="text-gray-600 font-medium text-sm md:text-base">
-          Rincian uang masuk dari Penjualan Bersama (Order #11).
+          Rincian uang masuk dari Penjualan Bersama (Order #{fairShare.order_id}).
         </p>
       </div>
       <div className="bg-primary-dark rounded-3xl p-6 md:p-8 shadow-xl shadow-green-900/20 text-white relative overflow-hidden">
@@ -27,20 +111,20 @@ export default function DetailBagiHasilPage() {
         <div className="relative z-10">
           <p className="text-green-100 font-bold text-lg md:text-xl mb-1">Total Uang Anda</p>
           <div className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-6 wrap-break-word leading-tight text-yellow-400">
-            Rp 2.779.500
+            Rp {fairShare.jumlah_diterima.toLocaleString('id-ID')}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-green-700/50">
             <div>
-              <p className="text-green-100 text-sm font-bold mb-1">Terjual Kepada:</p>
-              <div className="flex items-center gap-2 font-black text-xl">
-                <Building2 className="w-5 h-5" /> PT Makmur Jaya
+              <p className="text-green-100 text-sm font-bold mb-1">Grade Produk:</p>
+              <div className="font-black text-xl">
+                Grade {fairShare.grade}
               </div>
             </div>
             <div>
-              <p className="text-green-100 text-sm font-bold mb-1">Total Permintaan Pabrik:</p>
+              <p className="text-green-100 text-sm font-bold mb-1">Kontribusi Anda:</p>
               <div className="font-black text-xl">
-                500 Kg Cabai Merah
+                {fairShare.kontribusi_kg} kg
               </div>
             </div>
           </div>
@@ -57,32 +141,32 @@ export default function DetailBagiHasilPage() {
         <div className="p-6 md:p-8 space-y-4 font-mono text-lg md:text-xl text-gray-800">
           <div className="flex justify-between items-end border-b-2 border-dashed border-gray-200 pb-3">
             <div>
-              <span className="block font-bold">Harga Cabai (Koperasi)</span>
-              <span className="text-sm text-gray-500 font-sans">Harga jual ke pabrik</span>
+              <span className="block font-bold">Harga Jual (Grade {fairShare.grade})</span>
+              <span className="text-sm text-gray-500 font-sans">Harga final per kg</span>
             </div>
-            <span className="font-bold">Rp 15.000 / kg</span>
+            <span className="font-bold">Rp {fairShare.harga_final_per_kg.toLocaleString('id-ID')} / kg</span>
           </div>
           <div className="flex justify-between items-end border-b-2 border-dashed border-gray-200 pb-3">
             <div>
-              <span className="block font-bold">Cabai Setoran Anda</span>
-              <span className="text-sm text-gray-500 font-sans">Lolos Pengecekan Grade A</span>
+              <span className="block font-bold">Kontribusi Anda</span>
+              <span className="text-sm text-gray-500 font-sans">Grade {fairShare.grade}</span>
             </div>
-            <span className="font-bold">x 195 kg</span>
+            <span className="font-bold">x {fairShare.kontribusi_kg} kg</span>
           </div>
           <div className="flex justify-between items-center py-2 text-primary-dark">
             <span className="font-black font-sans">SUB-TOTAL</span>
-            <span className="font-bold">Rp 2.925.000</span>
+            <span className="font-bold">Rp {subTotal.toLocaleString('id-ID')}</span>
           </div>
           <div className="flex justify-between items-end border-b-2 border-solid border-gray-300 pb-4 text-red-600">
             <div>
-              <span className="block font-bold">Potongan Koperasi (5%)</span>
-              <span className="text-sm text-red-400 font-sans">Biaya antar & kemas</span>
+              <span className="block font-bold">Potongan Koperasi ({fairShare.fee_kopdes_persen}%)</span>
+              <span className="text-sm text-red-400 font-sans">Biaya layanan Kopdes</span>
             </div>
-            <span className="font-bold">- Rp 146.250</span>
+            <span className="font-bold">- Rp {fairShare.fee_kopdes_nominal.toLocaleString('id-ID')}</span>
           </div>
           <div className="flex justify-between items-center pt-2">
             <span className="font-black text-2xl font-sans text-gray-900">UANG BERSIH</span>
-            <span className="font-black text-3xl md:text-4xl text-primary-dark">Rp 2.779.500</span>
+            <span className="font-black text-3xl md:text-4xl text-primary-dark">Rp {fairShare.jumlah_diterima.toLocaleString('id-ID')}</span>
           </div>
         </div>
       </div>

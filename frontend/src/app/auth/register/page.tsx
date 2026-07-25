@@ -57,18 +57,11 @@ export default function RegisterPage() {
     setError(null);
 
     try {
-      if (!role) {
-        setError('Role tidak valid');
-        return;
-      }
-
-      const backendRole: "petani" | "petugas_kopdes" | "pembeli" | "admin" =
-        role === 'kopdes' ? 'petugas_kopdes' : role;
-
+      // Backend hardcodes role to 'pembeli' for self-registration
+      // Role selection in UI is for UX only, but backend will ignore it
       const registerData = {
         email: formData.email,
         password: formData.password,
-        role: backendRole,
         nama_lengkap: formData.nama_lengkap,
         nik: formData.nik,
         desa_id: formData.desa_id ? parseInt(formData.desa_id) : undefined,
@@ -83,16 +76,40 @@ export default function RegisterPage() {
       const response = await apiClient.register(registerData);
 
       if (response.success && response.data) {
-        // Store token and user data
-        authStorage.setToken(response.data.token);
-        authStorage.setUser({
-          user_id: response.data.user_id,
-          role: response.data.role,
-        });
+        // Register returns a 24h token (not access_token + refresh_token like login)
+        // Store it as access_token for consistency
+        authStorage.setAccessToken(response.data.token);
 
-        // Redirect to appropriate dashboard based on role
-        const dashboardPath = getDashboardPath(response.data.role);
-        router.push(dashboardPath);
+        // Set cookie for middleware (server-side auth check)
+        document.cookie = `access_token=${response.data.token}; path=/; max-age=86400`; // 24 hours
+
+        // Fetch complete user data including all fields from GET /api/users/me
+        const meResponse = await apiClient.getMe();
+
+        if (meResponse.success && meResponse.data) {
+          // Store complete user data
+          authStorage.setUser({
+            user_id: meResponse.data.id,
+            role: meResponse.data.role,
+            desa_id: meResponse.data.desa_id,
+            nama: meResponse.data.nama,
+            email: meResponse.data.email,
+            kopdes_id: meResponse.data.kopdes_id,
+          });
+
+          // Redirect to appropriate dashboard based on role
+          const dashboardPath = getDashboardPath(meResponse.data.role);
+          router.push(dashboardPath);
+        } else {
+          // Fallback to register response user data if getMe fails
+          authStorage.setUser({
+            user_id: response.data.user_id,
+            role: response.data.role,
+          });
+
+          const dashboardPath = getDashboardPath('pembeli');
+          router.push(dashboardPath);
+        }
       } else {
         setError(response.error || 'Pendaftaran gagal. Silakan coba lagi.');
       }

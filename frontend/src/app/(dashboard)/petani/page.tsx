@@ -1,17 +1,115 @@
-import React from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Wallet, Camera, PlusCircle, Sprout, ChevronRight, AlertCircle } from "lucide-react";
+import { Wallet, Camera, PlusCircle, Sprout, ChevronRight, AlertCircle, Award } from "lucide-react";
+import { authStorage } from "@/lib/auth";
+import { apiClient } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/ErrorState";
+
+interface TrustScoreData {
+  skor_konsistensi: number;
+  jumlah_transaksi_dihitung: number;
+  riwayat: Array<{
+    stok_estimasi_id: number;
+    estimasi_kg: number;
+    realisasi_kg: number;
+    skor_transaksi: number;
+  }>;
+}
 
 export default function PetaniDashboard() {
+  const [user, setUser] = useState<{ nama?: string; id?: number } | null>(null);
+  const [trustScore, setTrustScore] = useState<TrustScoreData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<{ code?: number; message?: string } | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const currentUser = authStorage.getUser();
+      if (!currentUser?.user_id) {
+        setError({ code: 403, message: 'User tidak ditemukan' });
+        setIsLoading(false);
+        return;
+      }
+
+      setUser({ nama: currentUser.nama, id: currentUser.user_id });
+
+      try {
+        // Fetch trust score
+        const trustResponse = await apiClient.getTrustScorePetani(currentUser.user_id);
+        if (trustResponse.success && trustResponse.data) {
+          setTrustScore(trustResponse.data);
+        }
+      } catch (err) {
+        console.error('Error fetching trust score:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const getTrustScoreBadge = (score: number) => {
+    if (score >= 80) {
+      return {
+        className: 'bg-success text-white',
+        label: 'Sangat Konsisten'
+      };
+    } else if (score >= 50) {
+      return {
+        className: 'bg-warning text-neutral-900',
+        label: 'Cukup Konsisten'
+      };
+    } else {
+      return {
+        className: 'bg-danger text-white',
+        label: 'Perlu Perbaikan'
+      };
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
+        <div className="h-12 bg-gray-200 rounded animate-pulse w-64" />
+        <div className="h-8 bg-gray-200 rounded animate-pulse w-96" />
+        <div className="bg-gray-200 rounded-lg h-32 animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-gray-200 rounded-lg h-32 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <ErrorState code={error.code} message={error.message} onRetry={() => window.location.reload()} />
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 md:space-y-8">
       <div className="pt-2 pb-2">
         <h1 className="text-3xl md:text-4xl font-extrabold text-primary-dark uppercase tracking-tight mb-2">
-          Halo, Pak Budi!
+          Halo, {user?.nama || 'Petani'}!
         </h1>
         <p className="text-gray-600 text-lg md:text-xl font-medium">
           Semoga panen hari ini lancar dan berkah.
         </p>
+        {trustScore && (
+          <div className="mt-4">
+            <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-md font-bold text-sm ${getTrustScoreBadge(trustScore.skor_konsistensi).className}`}>
+              <Award className="w-4 h-4" />
+              {trustScore.skor_konsistensi} · {getTrustScoreBadge(trustScore.skor_konsistensi).label}
+            </span>
+          </div>
+        )}
       </div>
       <div className="bg-warning/10 border-2 border-warning rounded-lg p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-pulse-slow">
         <div className="flex items-center gap-4">
@@ -64,14 +162,14 @@ export default function PetaniDashboard() {
 
         <Link href="/petani/skor" className="bg-white border-2 border-gray-200 rounded-md p-4 md:p-6 flex flex-col items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm group">
           <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 lucide lucide-award"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 lucide lucide-award"><circle cx="12" cy="8" r="6" /><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11" /></svg>
           </div>
           <span className="font-bold text-gray-700 text-lg text-center leading-tight">Skor<br />Saya</span>
         </Link>
 
         <Link href="/petani/logistik" className="bg-white border-2 border-gray-200 rounded-md p-4 md:p-6 flex flex-col items-center justify-center gap-3 hover:bg-gray-50 transition-colors shadow-sm group">
           <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 lucide lucide-truck"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14v10z"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 lucide lucide-truck"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14v10z" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>
           </div>
           <span className="font-bold text-gray-700 text-lg text-center leading-tight">Jadwal<br />Jemput</span>
         </Link>

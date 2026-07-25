@@ -1,17 +1,93 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { PlusCircle, Sprout, Search, Filter, ChevronRight, ChevronLeft, AlertCircle, Calendar } from "lucide-react";
-import { mockTanaman } from "@/lib/mockDataPetani";
+import { PlusCircle, Sprout, ChevronLeft, ChevronRight } from "lucide-react";
+import { authStorage } from "@/lib/auth";
+import { apiClient } from "@/lib/api-client";
+import { ErrorState } from "@/components/ui/ErrorState";
+
+interface StokEstimasi {
+  id: number;
+  petani_id: number;
+  komoditas_id: number;
+  jumlah_kg: number;
+  tanggal_target_panen: string;
+  status: string;
+  created_at: string;
+  komoditas_nama?: string;
+}
 
 export default function TanamanSayaPage() {
-  const [filter, setFilter] = useState("Semua");
+  const [stokList, setStokList] = useState<StokEstimasi[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<{ code?: number; message?: string } | null>(null);
 
-  const filteredTanaman = mockTanaman.filter(t => {
-    if (filter === "Semua") return true;
-    return t.status === filter;
-  });
+  useEffect(() => {
+    const fetchStok = async () => {
+      const user = authStorage.getUser();
+      if (!user?.user_id) {
+        setError({ code: 403, message: 'User tidak ditemukan' });
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await apiClient.getStokEstimasiPetani(user.user_id);
+        if (response.success && response.data) {
+          setStokList(response.data);
+        } else {
+          setError({ message: response.error || 'Gagal mengambil data stok estimasi' });
+        }
+      } catch (err) {
+        setError({ message: 'Terjadi kesalahan koneksi' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStok();
+  }, []);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'menunggu_panen': return 'bg-warning text-neutral-900';
+      case 'tervalidasi': return 'bg-success text-white';
+      case 'dibatalkan': return 'bg-danger text-white';
+      default: return 'bg-gray-200 text-gray-700';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'menunggu_panen': return 'Menunggu Panen';
+      case 'tervalidasi': return 'Tervalidasi';
+      case 'dibatalkan': return 'Dibatalkan';
+      default: return status;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="h-12 bg-gray-200 rounded animate-pulse w-64" />
+        <div className="h-8 bg-gray-200 rounded animate-pulse w-48" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-gray-200 rounded-3xl h-64 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <ErrorState code={error.code} message={error.message} onRetry={() => window.location.reload()} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 pb-32 md:pb-8">
@@ -43,68 +119,45 @@ export default function TanamanSayaPage() {
         </Link>
       </div>
       <div className="flex items-center gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        <button 
-          onClick={() => setFilter("Semua")}
-          className={`${filter === "Semua" ? "bg-primary-dark text-white shadow-sm" : "bg-white text-gray-600 border-2 border-gray-200 hover:bg-gray-50"} font-bold px-6 py-3 rounded-2xl shrink-0 transition-colors`}
-        >
-          Semua ({mockTanaman.length})
-        </button>
-        <button 
-          onClick={() => setFilter("Sedang Ditanam")}
-          className={`${filter === "Sedang Ditanam" ? "bg-primary-dark text-white shadow-sm" : "bg-white text-gray-600 border-2 border-gray-200 hover:bg-gray-50"} font-bold px-6 py-3 rounded-2xl shrink-0 transition-colors`}
-        >
-          Sedang Ditanam
-        </button>
-        <button 
-          onClick={() => setFilter("Sudah Panen")}
-          className={`${filter === "Sudah Panen" ? "bg-primary-dark text-white shadow-sm" : "bg-white text-gray-600 border-2 border-gray-200 hover:bg-gray-50"} font-bold px-6 py-3 rounded-2xl shrink-0 transition-colors`}
-        >
-          Sudah Panen
-        </button>
+        <div className="text-gray-500 font-medium text-sm">
+          Total: {stokList.length} laporan stok
+        </div>
       </div>
       <div className="space-y-4">
         <div className="flex items-center gap-2 border-l-4 border-primary-dark pl-3 mb-6">
-          <h2 className="text-xl font-bold text-gray-900">{filter === "Semua" ? "Semua Tanaman" : filter}</h2>
+          <h2 className="text-xl font-bold text-gray-900">Laporan Stok Estimasi</h2>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredTanaman.map((tanaman) => (
-            <Link key={tanaman.id} href="/petani/tanaman/detail" className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col group cursor-pointer hover:border-primary-dark transition-colors">
-              <div className="h-48 md:h-56 w-full bg-gray-200 relative overflow-hidden">
-                <img
-                  src={tanaman.gambar}
-                  alt={tanaman.nama}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                {tanaman.keterangan === "Stok Tersedia" && (
-                  <div className="absolute top-3 left-3 bg-primary-dark text-white font-bold px-3 py-1.5 rounded-xl text-sm shadow-md">
-                    Stok Tersedia
+          {stokList.map((stok) => (
+            <Link key={stok.id} href={`/petani/tanaman/detail/${stok.id}`} className="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col group cursor-pointer hover:border-primary-dark transition-colors">
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-primary-dark transition-colors">
+                      {stok.komoditas_nama || `Komoditas #${stok.komoditas_id}`}
+                    </h3>
+                    <p className="text-gray-500 text-sm font-medium mt-1">
+                      Estimasi: {stok.jumlah_kg.toLocaleString('id-ID')} kg
+                    </p>
                   </div>
-                )}
-                <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur-sm text-primary-dark font-bold px-3 py-1.5 rounded-xl text-sm shadow-sm">
-                  {tanaman.progress}% Selesai
+                  <span className={`px-3 py-1.5 rounded-xl text-sm font-bold ${getStatusBadge(stok.status)}`}>
+                    {getStatusLabel(stok.status)}
+                  </span>
                 </div>
-              </div>
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-2xl font-bold text-gray-900 group-hover:text-primary-dark transition-colors">{tanaman.nama}</h3>
-                  <span className="text-gray-500 text-sm font-medium">2026</span>
-                </div>
-                <div className="flex items-center gap-4 text-gray-600 text-sm font-medium mb-4">
-                  <span>0.5 ha</span>
-                  <span>•</span>
-                  <span>Laporan Rutin</span>
-                </div>
-                <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="bg-primary-dark h-full rounded-full transition-all duration-1000" style={{ width: `${tanaman.progress}%` }}></div>
+                <div className="flex items-center gap-4 text-gray-600 text-sm font-medium">
+                  <span>Target Panen: {new Date(stok.tanggal_target_panen).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
             </Link>
           ))}
         </div>
-        {filteredTanaman.length === 0 && (
+        {stokList.length === 0 && (
           <div className="text-center py-10">
-            <p className="text-gray-500 font-medium">Belum ada tanaman di kategori ini.</p>
+            <p className="text-gray-500 font-medium">Belum ada laporan stok estimasi.</p>
+            <Link href="/petani/laporan/baru" className="inline-block mt-4 text-primary-dark font-bold hover:underline">
+              Buat laporan stok sekarang
+            </Link>
           </div>
         )}
       </div>

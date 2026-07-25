@@ -2,22 +2,53 @@ export interface AuthUser {
   user_id: number;
   role: string;
   desa_id?: number | null;
+  nama?: string;
+  email?: string;
+  kopdes_id?: number | null;
 }
 
 export const authStorage = {
-  getToken: (): string | null => {
+  getAccessToken: (): string | null => {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token');
+    return localStorage.getItem('access_token');
+  },
+
+  setAccessToken: (token: string): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('access_token', token);
+  },
+
+  removeAccessToken: (): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('access_token');
+  },
+
+  getRefreshToken: (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('refresh_token');
+  },
+
+  setRefreshToken: (token: string): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('refresh_token', token);
+  },
+
+  removeRefreshToken: (): void => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('refresh_token');
+  },
+
+  // Legacy compatibility - map to access_token
+  getToken: (): string | null => {
+    return authStorage.getAccessToken();
   },
 
   setToken: (token: string): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('token', token);
+    authStorage.setAccessToken(token);
   },
 
   removeToken: (): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem('token');
+    authStorage.removeAccessToken();
   },
 
   getUser: (): AuthUser | null => {
@@ -42,12 +73,18 @@ export const authStorage = {
   },
 
   clearAuth: (): void => {
-    authStorage.removeToken();
+    authStorage.removeAccessToken();
+    authStorage.removeRefreshToken();
     authStorage.removeUser();
+
+    // Clear cookie for middleware
+    if (typeof window !== 'undefined') {
+      document.cookie = 'access_token=; path=/; max-age=0';
+    }
   },
 
   isAuthenticated: (): boolean => {
-    return !!authStorage.getToken();
+    return !!authStorage.getAccessToken();
   },
 };
 
