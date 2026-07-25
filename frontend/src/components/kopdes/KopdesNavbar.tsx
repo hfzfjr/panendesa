@@ -24,13 +24,13 @@ export function KopdesNavbar() {
       <header className="w-full h-16 bg-[#F9FAFB] border-b border-gray-200 fixed top-0 left-0 right-0 z-50 px-4 md:px-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Mobile Hamburger Button */}
-          <button 
+          <button
             className="lg:hidden text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"
             onClick={() => setIsMenuOpen(true)}
           >
             <Menu className="w-6 h-6" />
           </button>
-          
+
           <Link href="/kopdes" className="text-primary-dark font-bold text-xl md:text-2xl tracking-tight">
             PanenDesa
           </Link>
@@ -53,9 +53,9 @@ export function KopdesNavbar() {
 
       {/* Mobile Slide-out Menu Overlay */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden flex">
+        <div className="fixed inset-0 z-60 lg:hidden flex">
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMenuOpen(false)}
           ></div>
@@ -64,7 +64,7 @@ export function KopdesNavbar() {
           <div className="relative w-72 max-w-full bg-[#F9FAFB] h-full flex flex-col shadow-2xl animate-in slide-in-from-left">
             <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 shrink-0">
               <span className="text-primary-dark font-bold text-xl tracking-tight">PanenDesa</span>
-              <button 
+              <button
                 onClick={() => setIsMenuOpen(false)}
                 className="text-gray-500 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"
               >
@@ -83,11 +83,10 @@ export function KopdesNavbar() {
                     key={item.name}
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
-                      isActive 
-                        ? 'bg-primary-dark text-white font-bold shadow-sm' 
+                    className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive
+                        ? 'bg-primary-dark text-white font-bold shadow-sm'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 font-medium'
-                    }`}
+                      }`}
                   >
                     <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />
                     {item.name}
