@@ -124,6 +124,114 @@ router.get('/', verifyToken, requireRole(['petani']), async (req: Request, res: 
   }
 });
 
+/**
+ * GET /api/stok-estimasi/desa/:desa_id
+ * Mendapatkan daftar stok estimasi dari semua petani di desa tertentu
+ * Role: petugas_kopdes (hanya desa miliknya sendiri), admin
+ */
+router.get('/desa/:desa_id', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { desa_id } = req.params;
+
+    // Validasi: desa_id harus string
+    if (Array.isArray(desa_id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Parameter desa_id tidak valid'
+      });
+    }
+
+    const desaIdNum = parseInt(desa_id);
+
+    if (isNaN(desaIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: 'desa_id harus berupa angka'
+      });
+    }
+
+    const userRole = req.user!.role;
+    const userDesaId = req.user!.desa_id;
+
+    // RBAC: petugas_kopdes hanya boleh akses desa miliknya sendiri
+    if (userRole === 'petugas_kopdes') {
+      if (!userDesaId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke endpoint ini'
+        });
+      }
+
+      if (desaIdNum !== userDesaId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke desa lain'
+        });
+      }
+    }
+
+    // Role lain selain admin dan petugas_kopdes ditolak
+    if (userRole !== 'petugas_kopdes' && userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Anda tidak memiliki akses ke endpoint ini'
+      });
+    }
+
+    // Admin boleh akses semua data, tidak perlu validasi tambahan
+
+    // Fetch semua petani di desa tsb
+    const { data: petaniList, error: petaniError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('desa_id', desaIdNum)
+      .eq('role', 'petani');
+
+    if (petaniError) {
+      console.error('[Stok Estimasi] Error fetching petani list:', petaniError);
+      return res.status(500).json({
+        success: false,
+        error: 'Gagal mengambil data petani'
+      });
+    }
+
+    if (!petaniList || petaniList.length === 0) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    const petaniIds = petaniList.map(p => p.id);
+
+    // Fetch stok estimasi untuk semua petani di desa tsb
+    const { data, error } = await supabase
+      .from('stok_estimasi')
+      .select('*')
+      .in('petani_id', petaniIds)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[Stok Estimasi] Error fetching stok estimasi:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Gagal mengambil estimasi stok'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('[Stok Estimasi] Server error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Terjadi kesalahan server'
+    });
+  }
+});
+
 // GET /api/stok-estimasi/:petani_id - Get stock estimations for specific petani
 router.get('/:petani_id', verifyToken, async (req: Request, res: Response) => {
   try {

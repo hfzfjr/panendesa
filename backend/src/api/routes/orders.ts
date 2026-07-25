@@ -113,6 +113,211 @@ router.post('/', verifyToken, requireRole(['pembeli']), async (req: Request, res
 });
 
 /**
+ * GET /api/orders/kopdes/:kopdes_id
+ * Mendapatkan daftar order terkait kopdes tertentu
+ * Role: petugas_kopdes (hanya kopdes miliknya sendiri), admin
+ */
+router.get('/kopdes/:kopdes_id', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { kopdes_id } = req.params;
+
+    // Validasi: kopdes_id harus string
+    if (Array.isArray(kopdes_id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Parameter kopdes_id tidak valid'
+      });
+    }
+
+    const kopdesIdNum = parseInt(kopdes_id);
+
+    if (isNaN(kopdesIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: 'kopdes_id harus berupa angka'
+      });
+    }
+
+    const userRole = req.user!.role;
+    const userDesaId = req.user!.desa_id;
+
+    // Cek eksistensi kopdes terlebih dahulu (untuk semua role)
+    const { data: kopdesData, error: kopdesError } = await supabase
+      .from('kopdes')
+      .select('desa_id')
+      .eq('id', kopdesIdNum)
+      .single();
+
+    if (kopdesError || !kopdesData) {
+      return res.status(404).json({
+        success: false,
+        error: 'Kopdes tidak ditemukan'
+      });
+    }
+
+    // RBAC: petugas_kopdes hanya boleh akses kopdes di desa yang sama
+    if (userRole === 'petugas_kopdes') {
+      if (!userDesaId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke endpoint ini'
+        });
+      }
+
+      if (kopdesData.desa_id !== userDesaId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke order kopdes lain'
+        });
+      }
+    }
+
+    // Role lain selain admin dan petugas_kopdes ditolak
+    if (userRole !== 'petugas_kopdes' && userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Anda tidak memiliki akses ke endpoint ini'
+      });
+    }
+
+    // Admin boleh akses semua data, tidak perlu validasi tambahan
+
+    // Fetch orders
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, harga_terkunci, created_at')
+      .eq('kopdes_id', kopdesIdNum)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[Orders] Error fetching kopdes orders:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Gagal mengambil data order'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('[Orders] Server error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+/**
+ * GET /api/orders/:id
+ * Mendapatkan detail satu order
+ * Role: pembeli (milik sendiri), petugas_kopdes (order terkait kopdes miliknya), admin
+ */
+router.get('/:id', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Validasi: id harus string
+    if (Array.isArray(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Parameter id tidak valid'
+      });
+    }
+
+    const orderIdNum = parseInt(id);
+
+    if (isNaN(orderIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: 'id harus berupa angka'
+      });
+    }
+
+    const userRole = req.user!.role;
+    const userId = req.user!.user_id;
+    const userDesaId = req.user!.desa_id;
+
+    // Ambil order dari database
+    const { data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select('id, pembeli_id, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, fee_kopdes_persen_terpakai, harga_terkunci, created_at, updated_at')
+      .eq('id', orderIdNum)
+      .single();
+
+    if (orderError || !orderData) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order tidak ditemukan'
+      });
+    }
+
+    // RBAC: pembeli hanya boleh akses order miliknya sendiri
+    if (userRole === 'pembeli') {
+      if (orderData.pembeli_id !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke order ini'
+        });
+      }
+    }
+
+    // RBAC: petugas_kopdes hanya boleh akses order terkait kopdes di desa yang sama
+    if (userRole === 'petugas_kopdes') {
+      if (!userDesaId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke endpoint ini'
+        });
+      }
+
+      const { data: kopdesData, error: kopdesError } = await supabase
+        .from('kopdes')
+        .select('desa_id')
+        .eq('id', orderData.kopdes_id)
+        .single();
+
+      if (kopdesError || !kopdesData) {
+        return res.status(404).json({
+          success: false,
+          error: 'Kopdes tidak ditemukan'
+        });
+      }
+
+      if (kopdesData.desa_id !== userDesaId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke order ini'
+        });
+      }
+    }
+
+    // Role lain selain admin, pembeli, dan petugas_kopdes ditolak
+    if (userRole !== 'pembeli' && userRole !== 'petugas_kopdes' && userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Anda tidak memiliki akses ke endpoint ini'
+      });
+    }
+
+    // Admin boleh akses semua data, tidak perlu validasi tambahan
+
+    return res.json({
+      success: true,
+      data: orderData
+    });
+  } catch (error) {
+    console.error('[Orders] Server error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+/**
  * GET /api/orders/:pembeli_id
  * Mendapatkan daftar order milik pembeli
  * Role: pembeli (milik sendiri), admin

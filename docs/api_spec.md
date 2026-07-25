@@ -20,6 +20,10 @@ Response: `{ "success": true, "data": { "id": number, "petani_id": number, "komo
 Role: `petani` (HANYA data milik sendiri — akses ke `petani_id` lain ditolak 403), `petugas_kopdes` (HANYA petani di desa yang sama, dicek via `users.desa_id`), `admin` (semua). Role `pembeli` ditolak 403 — endpoint ini tidak untuk pembeli, mereka hanya lihat data agregat via `/api/capacity`.
 Response: `{ "success": true, "data": [...] }` — daftar laporan stok milik petani tsb.
 
+### GET /api/stok-estimasi/desa/:desa_id
+Role: `petugas_kopdes` (HANYA desa miliknya sendiri, cek req.user.desa_id terhadap :desa_id, tolak 403 kalau beda), `admin` (semua). Role `petani` dan `pembeli` ditolak 403.
+Response: daftar stok_estimasi dari semua petani di desa tsb, format array sama seperti GET /api/stok-estimasi/:petani_id.
+
 ## Intake & Grading (Kopdes)
 
 ### POST /api/intake-grading
@@ -61,6 +65,14 @@ Response: `{ "success": true, "data": { "order_id": number, "status": string } }
 ### GET /api/orders/:pembeli_id
 Role: `pembeli` (milik sendiri), `admin`
 Response: daftar order milik pembeli tsb beserta status terkini.
+
+### GET /api/orders/kopdes/:kopdes_id
+Role: `petugas_kopdes` (hanya kopdes miliknya sendiri — cek desa_id kopdes terhadap req.user.desa_id), `admin`
+Response: daftar order yang terkait kopdes tsb (join ke tabel orders where kopdes_id = :kopdes_id), format sama dengan GET /api/orders/:pembeli_id.
+
+### GET /api/orders/:id
+Role: `pembeli` (order miliknya sendiri), `petugas_kopdes` (order terkait kopdes miliknya), `admin` (semua) — tolak 403 kalau bukan pemilik/terkait
+Response: detail satu order (semua kolom di tabel orders untuk order tsb), format `{ success: true, data: {...} }`, 404 kalau order tidak ditemukan.
 
 ### POST /api/orders/:id/cancel
 Role: `pembeli` (pemilik order), `admin`
