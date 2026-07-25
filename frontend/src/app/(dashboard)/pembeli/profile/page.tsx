@@ -1,14 +1,39 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User, Settings, MapPin, CreditCard, Bell,
   HelpCircle, LogOut, ChevronRight
 } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
+import { ErrorState } from "../../../../components/ui/ErrorState";
+import { apiClient } from "../../../../lib/api-client";
 
 export default function ProfilePage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await apiClient.getMe();
+        if (response.success && response.data) {
+          setUserData(response.data);
+        } else {
+          setError(response.error || 'Gagal mengambil data profil');
+        }
+      } catch (err) {
+        setError('Terjadi kesalahan saat mengambil data profil');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   const menuItems = [
     { icon: User, label: "Informasi Pribadi", href: "#" },
     { icon: MapPin, label: "Alamat Pengiriman", href: "#" },
@@ -17,6 +42,33 @@ export default function ProfilePage() {
     { icon: Settings, label: "Pengaturan Akun", href: "#" },
     { icon: HelpCircle, label: "Bantuan & Dukungan", href: "#" },
   ];
+
+  if (loading) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded mb-6 w-48"></div>
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 flex items-center gap-5">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gray-200 shrink-0"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="max-w-2xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Profil Saya</h1>
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-2xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
@@ -32,8 +84,8 @@ export default function ProfilePage() {
         </div>
 
         <div className="relative z-10">
-          <h2 className="font-bold text-gray-900 text-lg md:text-xl mb-1">Amanda Sari</h2>
-          <p className="text-sm text-gray-500 mb-2">amanda.sari@email.com</p>
+          <h2 className="font-bold text-gray-900 text-lg md:text-xl mb-1">{userData?.nama || 'Pengguna'}</h2>
+          <p className="text-sm text-gray-500 mb-2">{userData?.email || ''}</p>
           <span className="inline-flex items-center bg-primary-dark/10 text-primary-dark px-3 py-1 rounded-full text-xs font-bold">
             Member Aktif
           </span>
