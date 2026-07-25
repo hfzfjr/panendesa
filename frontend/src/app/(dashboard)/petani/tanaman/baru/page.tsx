@@ -103,7 +103,7 @@ export default function TambahTanamanPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+              <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
                 <Scale className="w-4 h-4 text-gray-400" /> Estimasi Jumlah Panen
               </label>
               <div className="relative">
@@ -122,7 +122,7 @@ export default function TambahTanamanPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+              <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-gray-400" /> Tanggal Target Panen
               </label>
               <input
@@ -155,8 +155,8 @@ export default function TambahTanamanPage() {
           type="submit"
           disabled={isSubmitting}
           className={`w-full font-bold text-lg py-4 rounded-md transition-all shadow-md flex items-center justify-center gap-2 ${isSubmitting
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-primary hover:bg-primary-dark text-white'
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-primary hover:bg-primary-dark text-white'
             }`}
         >
           {isSubmitting ? (

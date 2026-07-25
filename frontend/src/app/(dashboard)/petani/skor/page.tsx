@@ -246,7 +246,7 @@ export default function TrustScorePage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[500px]">
+            <table className="w-full text-left border-collapse min-w-125">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="pb-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Tanggal</th>
@@ -278,8 +278,8 @@ export default function TrustScorePage() {
                     </td>
                     <td className="py-4 text-right pr-2">
                       <span className={`inline-block px-2.5 py-1 rounded-sm text-xs font-bold ${riwayat.skor_transaksi >= 80 ? 'bg-success text-white' :
-                          riwayat.skor_transaksi >= 50 ? 'bg-warning text-neutral-900' :
-                            'bg-danger text-white'
+                        riwayat.skor_transaksi >= 50 ? 'bg-warning text-neutral-900' :
+                          'bg-danger text-white'
                         }`}>
                         {riwayat.skor_transaksi}
                       </span>
