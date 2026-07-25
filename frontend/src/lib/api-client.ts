@@ -211,15 +211,12 @@ class ApiClient {
 
   async register(userData: RegisterData): Promise<RegisterResponse> {
     try {
-      // Remove role from request body - backend hardcodes it to 'pembeli'
-      const { role, ...safeUserData } = userData;
-
       const response = await fetch(`${this.baseUrl}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(safeUserData),
+        body: JSON.stringify(userData),
       });
 
       const data: RegisterResponse = await response.json();
@@ -487,6 +484,123 @@ class ApiClient {
     } catch (error) {
       console.error('Get fair share petani error:', error);
       return { success: false, error: 'Gagal mengambil data fair share' };
+    }
+  }
+
+  async postOrder(komoditasId: number, jumlahDimintaKg: number, desaIdPrioritas: number): Promise<any> {
+    try {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          komoditas_id: komoditasId,
+          jumlah_diminta_kg: jumlahDimintaKg,
+          desa_id_prioritas: desaIdPrioritas,
+        }),
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Post order error:', error);
+      return { success: false, error: 'Gagal membuat pesanan' };
+    }
+  }
+
+  async getOrdersByPembeli(pembeliId: number): Promise<any> {
+    try {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/orders/${pembeliId}`, {
+        method: 'GET',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get orders by pembeli error:', error);
+      return { success: false, error: 'Gagal mengambil data pesanan' };
+    }
+  }
+
+  async getTrustScoreDesa(desaId: number): Promise<any> {
+    try {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/trust-score/desa/${desaId}`, {
+        method: 'GET',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get trust score desa error:', error);
+      return { success: false, error: 'Gagal mengambil skor konsistensi desa' };
+    }
+  }
+
+  async getDesa(): Promise<any> {
+    try {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/desa`, {
+        method: 'GET',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get desa error:', error);
+      return { success: false, error: 'Gagal mengambil data desa' };
+    }
+  }
+
+  async getAuditLog(tabel?: string, recordId?: number): Promise<any> {
+    try {
+      const params = new URLSearchParams();
+      if (tabel) params.append('tabel', tabel);
+      if (recordId) params.append('record_id', recordId.toString());
+
+      const url = `${this.baseUrl}/api/audit-log${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await this.fetchWithAuth(url, {
+        method: 'GET',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get audit log error:', error);
+      return { success: false, error: 'Gagal mengambil data audit log' };
+    }
+  }
+
+  async postAuditLog(tabelTerikait: string, recordId: number, aksi: string, catatan?: string): Promise<any> {
+    try {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/audit-log`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tabel_terkait: tabelTerikait,
+          record_id: recordId,
+          aksi: aksi,
+          catatan: catatan,
+        }),
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Post audit log error:', error);
+      return { success: false, error: 'Gagal menambahkan catatan audit' };
+    }
+  }
+
+  async getEconomicImpact(komoditasId: number, desaId?: number): Promise<any> {
+    try {
+      const params = new URLSearchParams();
+      if (desaId) params.append('desa_id', desaId.toString());
+
+      const url = `${this.baseUrl}/api/economic-impact/${komoditasId}${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await this.fetchWithAuth(url, {
+        method: 'GET',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get economic impact error:', error);
+      return { success: false, error: 'Gagal mengambil data dampak ekonomi' };
     }
   }
 
