@@ -179,6 +179,10 @@ describe('Orders API - New Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(Array.isArray(response.body.data)).toBe(true);
+      if (response.body.data.length > 0) {
+        expect(response.body.data[0]).toHaveProperty('pembeli_id');
+        expect(response.body.data[0]).toHaveProperty('pembeli_nama');
+      }
     });
 
     it('should return 403 when kopdes user requests different kopdes', async () => {
@@ -275,6 +279,7 @@ describe('Orders API - New Endpoints', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.id).toBe(testOrderId);
       expect(response.body.data.pembeli_id).toBe(testPembeliUserId);
+      expect(response.body.data).toHaveProperty('pembeli_nama');
     });
 
     it('should return order detail when kopdes user requests related order', async () => {

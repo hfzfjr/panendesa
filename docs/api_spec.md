@@ -8,6 +8,19 @@ Semua response sukses berbentuk `{ "success": true, "data": {...} }`. Semua resp
 Request: `{ "email": string, "password": string }`
 Response sukses: `{ "success": true, "data": { "token": string, "role": string, "user_id": number } }`
 
+## Users
+
+### GET /api/users/me
+Role: semua role terautentikasi
+Response: `{ "success": true, "data": { "id": number, "nama": string, "email": string, "role": string, "desa_id": number | null, "profile_completed": boolean, "skor_konsistensi": number, "kopdes_id": number | null } }`
+Catatan: `kopdes_id` hanya disertakan untuk role `petugas_kopdes` (di-resolve dari `desa_id` via tabel `kopdes`). Untuk role lain atau jika kopdes tidak ditemukan untuk desa tersebut, field ini bernilai `null`.
+
+### PATCH /api/users/me/complete-profile
+Role: semua role terautentikasi
+Request: `{ "nama": string }`
+Proses: hanya mengizinkan update `nama` dan `profile_completed`. Field sensitif seperti `role` dan `desa_id` diabaikan (security).
+Response: `{ "success": true, "data": { "id": number, "nama": string, "email": string, "role": string, "desa_id": number | null, "profile_completed": boolean } }`
+
 ## Stok Estimasi (Petani)
 
 ### POST /api/stok-estimasi
@@ -68,11 +81,11 @@ Response: daftar order milik pembeli tsb beserta status terkini.
 
 ### GET /api/orders/kopdes/:kopdes_id
 Role: `petugas_kopdes` (hanya kopdes miliknya sendiri — cek desa_id kopdes terhadap req.user.desa_id), `admin`
-Response: daftar order yang terkait kopdes tsb (join ke tabel orders where kopdes_id = :kopdes_id), format sama dengan GET /api/orders/:pembeli_id.
+Response: daftar order yang terkait kopdes tsb (join ke tabel orders where kopdes_id = :kopdes_id), format: `{ success: true, data: [{ id, pembeli_id, pembeli_nama, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, harga_terkunci, created_at }] }`
 
 ### GET /api/orders/:id
 Role: `pembeli` (order miliknya sendiri), `petugas_kopdes` (order terkait kopdes miliknya), `admin` (semua) — tolak 403 kalau bukan pemilik/terkait
-Response: detail satu order (semua kolom di tabel orders untuk order tsb), format `{ success: true, data: {...} }`, 404 kalau order tidak ditemukan.
+Response: detail satu order (semua kolom di tabel orders untuk order tsb plus pembeli_nama dari tabel users), format `{ success: true, data: { id, pembeli_id, pembeli_nama, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, fee_kopdes_persen_terpakai, harga_terkunci, created_at, updated_at } }`, 404 kalau order tidak ditemukan.
 
 ### POST /api/orders/:id/cancel
 Role: `pembeli` (pemilik order), `admin`

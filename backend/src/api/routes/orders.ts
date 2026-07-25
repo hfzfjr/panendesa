@@ -182,10 +182,21 @@ router.get('/kopdes/:kopdes_id', verifyToken, async (req: Request, res: Response
 
     // Admin boleh akses semua data, tidak perlu validasi tambahan
 
-    // Fetch orders
+    // Fetch orders with pembeli info via JOIN
     const { data, error } = await supabase
       .from('orders')
-      .select('id, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, harga_terkunci, created_at')
+      .select(`
+        id,
+        pembeli_id,
+        komoditas_id,
+        kopdes_id,
+        jumlah_diminta_kg,
+        status,
+        harga_final_per_kg,
+        harga_terkunci,
+        created_at,
+        users!orders_pembeli_id_fkey (nama)
+      `)
       .eq('kopdes_id', kopdesIdNum)
       .order('created_at', { ascending: false });
 
@@ -197,9 +208,16 @@ router.get('/kopdes/:kopdes_id', verifyToken, async (req: Request, res: Response
       });
     }
 
+    // Flatten nested users data to pembeli_nama for backward compatibility
+    const flattenedData = (data || []).map((order: any) => ({
+      ...order,
+      pembeli_nama: order.users?.nama || null,
+      users: undefined // Remove nested object
+    }));
+
     return res.json({
       success: true,
-      data: data || []
+      data: flattenedData
     });
   } catch (error) {
     console.error('[Orders] Server error:', error);
@@ -240,10 +258,23 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     const userId = req.user!.user_id;
     const userDesaId = req.user!.desa_id;
 
-    // Ambil order dari database
+    // Ambil order dari database with pembeli info via JOIN
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .select('id, pembeli_id, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, fee_kopdes_persen_terpakai, harga_terkunci, created_at, updated_at')
+      .select(`
+        id,
+        pembeli_id,
+        komoditas_id,
+        kopdes_id,
+        jumlah_diminta_kg,
+        status,
+        harga_final_per_kg,
+        fee_kopdes_persen_terpakai,
+        harga_terkunci,
+        created_at,
+        updated_at,
+        users!orders_pembeli_id_fkey (nama)
+      `)
       .eq('id', orderIdNum)
       .single();
 
@@ -304,9 +335,16 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
 
     // Admin boleh akses semua data, tidak perlu validasi tambahan
 
+    // Flatten nested users data to pembeli_nama for backward compatibility
+    const flattenedData = {
+      ...orderData,
+      pembeli_nama: (orderData as any).users?.nama || null,
+      users: undefined // Remove nested object
+    };
+
     return res.json({
       success: true,
-      data: orderData
+      data: flattenedData
     });
   } catch (error) {
     console.error('[Orders] Server error:', error);

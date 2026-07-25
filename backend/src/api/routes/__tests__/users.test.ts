@@ -143,3 +143,183 @@ describe('Users API - Complete Profile', () => {
   });
 });
 
+describe('Users API - GET /api/users/me with kopdes_id', () => {
+  let petugasKopdesUserId: number;
+  let petugasKopdesToken: string;
+  let testDesaId: number;
+  let testKopdesId: number;
+  let nonPetugasUserId: number;
+  let nonPetugasToken: string;
+
+  beforeAll(async () => {
+    // Create test desa
+    const { data: newDesa } = await supabase
+      .from('desa')
+      .insert({
+        nama_desa: 'Desa Test Kopdes'
+      })
+      .select()
+      .single();
+
+    if (!newDesa) throw new Error('Failed to create test desa');
+    testDesaId = newDesa.id;
+
+    // Create test kopdes
+    const { data: newKopdes } = await supabase
+      .from('kopdes')
+      .insert({
+        desa_id: testDesaId,
+        nama_kopdes: 'Kopdes Test',
+        fee_persen: 5.0
+      })
+      .select()
+      .single();
+
+    if (!newKopdes) throw new Error('Failed to create test kopdes');
+    testKopdesId = newKopdes.id;
+
+    // Create petugas_kopdes user
+    const passwordHash = await bcrypt.hash('password123', 10);
+    const { data: newUser } = await supabase
+      .from('users')
+      .insert({
+        email: `test-petugas-kopdes-${Date.now()}@example.com`,
+        password_hash: passwordHash,
+        nama: 'Test Petugas Kopdes',
+        role: 'petugas_kopdes',
+        desa_id: testDesaId,
+        profile_completed: true
+      })
+      .select()
+      .single();
+
+    if (!newUser) throw new Error('Failed to create test petugas_kopdes');
+    petugasKopdesUserId = newUser.id;
+
+    petugasKopdesToken = jwt.sign(
+      {
+        user_id: newUser.id,
+        role: newUser.role,
+        desa_id: newUser.desa_id
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Create non-petugas_kopdes user for comparison
+    const { data: nonPetugasUser } = await supabase
+      .from('users')
+      .insert({
+        email: `test-non-petugas-${Date.now()}@example.com`,
+        password_hash: passwordHash,
+        nama: 'Test Non Petugas',
+        role: 'petani',
+        desa_id: null,
+        profile_completed: true
+      })
+      .select()
+      .single();
+
+    if (!nonPetugasUser) throw new Error('Failed to create test non-petugas');
+    nonPetugasUserId = nonPetugasUser.id;
+
+    nonPetugasToken = jwt.sign(
+      {
+        user_id: nonPetugasUser.id,
+        role: nonPetugasUser.role,
+        desa_id: nonPetugasUser.desa_id
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+  });
+
+  afterAll(async () => {
+    // Clean up
+    if (petugasKopdesUserId) {
+      await supabase.from('users').delete().eq('id', petugasKopdesUserId);
+    }
+    if (nonPetugasUserId) {
+      await supabase.from('users').delete().eq('id', nonPetugasUserId);
+    }
+    if (testKopdesId) {
+      await supabase.from('kopdes').delete().eq('id', testKopdesId);
+    }
+    if (testDesaId) {
+      await supabase.from('desa').delete().eq('id', testDesaId);
+    }
+  });
+
+  it('should include kopdes_id for petugas_kopdes role', async () => {
+    const response = await request(app)
+      .get('/api/users/me')
+      .set('Authorization', `Bearer ${petugasKopdesToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.kopdes_id).toBe(testKopdesId);
+  });
+
+  it('should return null kopdes_id for non-petugas_kopdes role', async () => {
+    const response = await request(app)
+      .get('/api/users/me')
+      .set('Authorization', `Bearer ${nonPetugasToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.kopdes_id).toBeNull();
+  });
+
+  it('should return null kopdes_id if kopdes not found for desa', async () => {
+    // Create desa without kopdes
+    const { data: orphanDesa } = await supabase
+      .from('desa')
+      .insert({
+        nama_desa: 'Desa Orphan Test'
+      })
+      .select()
+      .single();
+
+    if (!orphanDesa) throw new Error('Failed to create orphan desa');
+
+    // Create petugas_kopdes for desa without kopdes
+    const passwordHash = await bcrypt.hash('password123', 10);
+    const { data: orphanUser } = await supabase
+      .from('users')
+      .insert({
+        email: `test-orphan-kopdes-${Date.now()}@example.com`,
+        password_hash: passwordHash,
+        nama: 'Test Orphan Petugas',
+        role: 'petugas_kopdes',
+        desa_id: orphanDesa.id,
+        profile_completed: true
+      })
+      .select()
+      .single();
+
+    if (!orphanUser) throw new Error('Failed to create orphan petugas');
+
+    const orphanToken = jwt.sign(
+      {
+        user_id: orphanUser.id,
+        role: orphanUser.role,
+        desa_id: orphanUser.desa_id
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    const response = await request(app)
+      .get('/api/users/me')
+      .set('Authorization', `Bearer ${orphanToken}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.kopdes_id).toBeNull();
+
+    // Clean up
+    await supabase.from('users').delete().eq('id', orphanUser.id);
+    await supabase.from('desa').delete().eq('id', orphanDesa.id);
+  });
+});
+

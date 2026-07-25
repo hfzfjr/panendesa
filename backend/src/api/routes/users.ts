@@ -85,9 +85,27 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
       });
     }
 
+    // For petugas_kopdes role, resolve kopdes_id from desa_id
+    let kopdes_id = null;
+    if (user.role === 'petugas_kopdes' && user.desa_id) {
+      const { data: kopdes } = await supabase
+        .from('kopdes')
+        .select('id')
+        .eq('desa_id', user.desa_id)
+        .single();
+
+      if (kopdes) {
+        kopdes_id = kopdes.id;
+      }
+      // If no kopdes found for the desa, kopdes_id remains null (graceful handling)
+    }
+
     return res.status(200).json({
       success: true,
-      data: user
+      data: {
+        ...user,
+        kopdes_id // Only included for petugas_kopdes, null for others or if not found
+      }
     });
   } catch (error) {
     console.error('Get user error:', error);
