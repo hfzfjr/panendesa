@@ -1,16 +1,114 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, PackageCheck, Star, MessageSquare,
   Leaf, Download, Store, ShieldCheck, Info
 } from "lucide-react";
 import { Button } from "../../../../../components/ui/Button";
+import { ErrorState } from "../../../../../components/ui/ErrorState";
+import { apiClient } from "../../../../../lib/api-client";
 
 export default function OrderCompletedPage() {
   const [supplierRating, setSupplierRating] = useState(5);
   const [logisticsRating, setLogisticsRating] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [completedOrders, setCompletedOrders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCompletedOrders = async () => {
+      try {
+        // First get user data to get pembeli_id
+        const userResponse = await apiClient.getMe();
+        if (userResponse.success && userResponse.data) {
+          // Then fetch orders
+          const ordersResponse = await apiClient.getOrdersByPembeli(userResponse.data.id);
+          if (ordersResponse.success && ordersResponse.data) {
+            // Filter only completed orders
+            const completed = ordersResponse.data.filter((order: any) => order.status === 'selesai');
+            setCompletedOrders(completed);
+          } else {
+            setError(ordersResponse.error || 'Gagal mengambil data pesanan');
+          }
+        } else {
+          setError(userResponse.error || 'Gagal mengambil data pengguna');
+        }
+      } catch (err) {
+        setError('Terjadi kesalahan saat mengambil data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompletedOrders();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
+        <div className="animate-pulse">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+            <div className="h-8 bg-gray-200 rounded w-48"></div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 h-64"></div>
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 h-64"></div>
+            </div>
+            <div className="lg:col-span-1 space-y-4">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 h-48"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
+        <div className="flex items-center gap-3 mb-6">
+          <Link href="/pembeli/orders" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
+            <ArrowLeft className="w-6 h-6 text-gray-800" />
+          </Link>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Pesanan Selesai</h1>
+        </div>
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
+      </main>
+    );
+  }
+
+  // If no completed orders, show empty state
+  if (completedOrders.length === 0) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
+        <div className="flex items-center gap-3 mb-6">
+          <Link href="/pembeli/orders" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
+            <ArrowLeft className="w-6 h-6 text-gray-800" />
+          </Link>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Pesanan Selesai</h1>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-200 p-8 md:p-12 text-center flex flex-col items-center">
+          <PackageCheck className="w-16 h-16 text-gray-300 mb-4" />
+          <h3 className="font-bold text-gray-900 text-lg mb-2">Belum ada pesanan selesai</h3>
+          <p className="text-gray-500 text-sm mb-6 max-w-sm">
+            Anda belum memiliki pesanan yang telah selesai. Pesanan yang selesai akan muncul di halaman ini.
+          </p>
+          <Link href="/pembeli/orders">
+            <Button className="px-8 h-12 rounded-xl bg-(--color-primary-dark) hover:bg-(--color-primary) text-white font-bold transition-colors">
+              Lihat Semua Pesanan
+            </Button>
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // Show first completed order (in real app, this would be parameterized by order ID)
+  const order = completedOrders[0];
 
   return (
     <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">

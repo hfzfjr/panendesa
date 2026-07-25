@@ -1,71 +1,139 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, Filter, Package, Truck, CheckCircle2, MessageCircle } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
+import { ErrorState } from "../../../../components/ui/ErrorState";
+import { apiClient } from "../../../../lib/api-client";
 
 type OrderStatus = "Semua" | "Diproses" | "Dikirim" | "Selesai";
 
 export default function OrderHistoryPage() {
   const [activeTab, setActiveTab] = useState<OrderStatus>("Semua");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [pembeliId, setPembeliId] = useState<number | null>(null);
 
   const tabs: OrderStatus[] = ["Semua", "Diproses", "Dikirim", "Selesai"];
 
-  const mockOrders = [
-    {
-      id: "AGR-2024-99282",
-      status: "Diproses",
-      date: "26 Mei 2024",
-      store: "Kopdes Tani Makmur",
-      item: "Cabai Merah Keriting (Grade A)",
-      qty: "500 kg",
-      price: "Rp 12.500.000",
-      image: "https://images.unsplash.com/photo-1526346698789-22fd84314424?q=80&w=150&auto=format&fit=crop"
-    },
-    {
-      id: "AGR-2024-99281",
-      status: "Dikirim",
-      date: "25 Mei 2024",
-      store: "Kopdes Makmur Jaya",
-      item: "Tomat Ceri Hidroponik",
-      qty: "100 kg",
-      price: "Rp 2.100.000",
-      image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=150&auto=format&fit=crop"
-    },
-    {
-      id: "AGR-2024-99280",
-      status: "Selesai",
-      date: "20 Mei 2024",
-      store: "Kopdes Sumber Rejeki",
-      item: "Bawang Merah Super",
-      qty: "200 kg",
-      price: "Rp 6.000.000",
-      image: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?q=80&w=150&auto=format&fit=crop"
-    }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // First get user data to get pembeli_id
+        const userResponse = await apiClient.getMe();
+        if (userResponse.success && userResponse.data) {
+          setPembeliId(userResponse.data.id);
+
+          // Then fetch orders
+          const ordersResponse = await apiClient.getOrdersByPembeli(userResponse.data.id);
+          if (ordersResponse.success && ordersResponse.data) {
+            setOrders(ordersResponse.data);
+          } else {
+            setError(ordersResponse.error || 'Gagal mengambil data pesanan');
+          }
+        } else {
+          setError(userResponse.error || 'Gagal mengambil data pengguna');
+        }
+      } catch (err) {
+        setError('Terjadi kesalahan saat mengambil data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const filteredOrders = activeTab === "Semua"
-    ? mockOrders
-    : mockOrders.filter(o => o.status === activeTab);
+    ? orders
+    : orders.filter(o => {
+      // Map backend status to frontend tabs
+      const statusMap: Record<string, OrderStatus> = {
+        'dikonfirmasi_sementara': 'Diproses',
+        'siap_kirim': 'Diproses',
+        'dikirim': 'Dikirim',
+        'selesai': 'Selesai',
+        'dibatalkan': 'Selesai',
+      };
+      return statusMap[o.status] === activeTab;
+    });
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Diproses": return <Package className="w-4 h-4 text-amber-600" />;
-      case "Dikirim": return <Truck className="w-4 h-4 text-blue-600" />;
-      case "Selesai": return <CheckCircle2 className="w-4 h-4 text-green-600" />;
+      case "dikonfirmasi_sementara":
+      case "siap_kirim":
+      case "Diproses":
+        return <Package className="w-4 h-4 text-amber-600" />;
+      case "dikirim":
+      case "Dikirim":
+        return <Truck className="w-4 h-4 text-blue-600" />;
+      case "selesai":
+      case "Selesai":
+        return <CheckCircle2 className="w-4 h-4 text-green-600" />;
       default: return <Package className="w-4 h-4" />;
     }
   };
 
   const getStatusBg = (status: string) => {
     switch (status) {
-      case "Diproses": return "bg-amber-50 text-amber-700 border-amber-200";
-      case "Dikirim": return "bg-blue-50 text-blue-700 border-blue-200";
-      case "Selesai": return "bg-green-50 text-green-700 border-green-200";
+      case "dikonfirmasi_sementara":
+        return "bg-accent text-neutral-900 border-accent"; // Amber with dark text per design_tokens.md
+      case "siap_kirim":
+      case "Diproses":
+        return "bg-amber-50 text-amber-700 border-amber-200";
+      case "dikirim":
+      case "Dikirim":
+        return "bg-blue-50 text-blue-700 border-blue-200";
+      case "selesai":
+      case "Selesai":
+        return "bg-success text-white border-success";
+      case "dibatalkan":
+        return "bg-danger text-white border-danger";
       default: return "bg-gray-50 text-gray-700 border-gray-200";
     }
   };
+
+  const getStatusLabel = (status: string) => {
+    const labelMap: Record<string, string> = {
+      'dikonfirmasi_sementara': 'Dikonfirmasi',
+      'siap_kirim': 'Siap Kirim',
+      'dikirim': 'Dikirim',
+      'selesai': 'Selesai',
+      'dibatalkan': 'Dibatalkan',
+    };
+    return labelMap[status] || status;
+  };
+
+  if (loading) {
+    return (
+      <main className="max-w-4xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded mb-6 w-32"></div>
+          <div className="flex gap-2 mb-6">
+            <div className="h-10 bg-gray-200 rounded-full w-20"></div>
+            <div className="h-10 bg-gray-200 rounded-full w-20"></div>
+            <div className="h-10 bg-gray-200 rounded-full w-20"></div>
+            <div className="h-10 bg-gray-200 rounded-full w-20"></div>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 h-40"></div>
+            <div className="bg-white rounded-2xl border border-gray-200 p-6 h-40"></div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="max-w-4xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Daftar Pesanan</h1>
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-4xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
@@ -97,26 +165,26 @@ export default function OrderHistoryPage() {
                 <div className="flex items-center gap-2">
                   <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusBg(order.status)}`}>
                     {getStatusIcon(order.status)}
-                    {order.status}
+                    {getStatusLabel(order.status)}
                   </span>
-                  <span className="text-xs text-gray-500 font-medium">{order.date}</span>
+                  <span className="text-xs text-gray-500 font-medium">{new Date(order.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
                 </div>
-                <span className="text-xs font-bold text-gray-400">{order.id}</span>
+                <span className="text-xs font-bold text-gray-400">#{order.id}</span>
               </div>
 
               <div className="flex gap-4">
                 <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-200 shrink-0">
-                  <img src={order.image} alt={order.item} className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1526346698789-22fd84314424?q=80&w=150&auto=format&fit=crop" alt="Komoditas" className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-gray-900 text-sm md:text-base truncate">{order.item}</h4>
-                  <p className="text-xs text-gray-500 mb-1">{order.qty} • {order.store}</p>
-                  <p className="font-bold text-primary-dark">{order.price}</p>
+                  <h4 className="font-bold text-gray-900 text-sm md:text-base truncate">Order #{order.id}</h4>
+                  <p className="text-xs text-gray-500 mb-1">{order.jumlah_diminta_kg} kg • Kopdes ID: {order.kopdes_id}</p>
+                  <p className="font-bold text-primary-dark">{order.harga_final_per_kg ? `Rp ${order.harga_final_per_kg.toLocaleString('id-ID')}/kg` : 'Harga belum ditentukan'}</p>
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-3">
-                {order.status === "Selesai" ? (
+                {order.status === "selesai" ? (
                   <>
                     <Button variant="custom" className="px-6 py-2 h-10 rounded-xl bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold text-sm transition-colors">
                       Beli Lagi
