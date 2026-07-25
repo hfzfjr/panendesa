@@ -108,7 +108,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
         
         {/* Left Column: Perlu Perhatian */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[400px]">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-100">
           <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
             <h2 className="font-bold text-lg text-gray-900">Perlu Perhatian</h2>
             <span className="bg-red-600 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
@@ -140,7 +140,7 @@ export default function AdminDashboardPage() {
                       }`}>
                         {alert.action}
                         {alert.type === 'critical' && <ArrowRight className="w-3 h-3" />}
-                        {alert.type === 'warning' && <span className="ml-0.5 border border-current rounded-[2px] w-3 h-3 flex items-center justify-center">-</span>}
+                        {alert.type === 'warning' && <span className="ml-0.5 border border-current rounded-xs w-3 h-3 flex items-center justify-center">-</span>}
                         {alert.type === 'info' && <BarChart4 className="w-3 h-3" />}
                       </button>
                     </div>
@@ -152,7 +152,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Right Column: Aktivitas Terbaru */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[400px]">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-100">
           <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
             <h2 className="font-bold text-lg text-gray-900">Aktivitas Terbaru</h2>
             <button className="text-xs font-bold text-primary-dark hover:underline">
@@ -219,7 +219,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
         
-        <div className="w-full h-[300px] bg-gray-200 rounded-xl relative overflow-hidden flex items-center justify-center">
+        <div className="w-full h-75 bg-gray-200 rounded-xl relative overflow-hidden flex items-center justify-center">
           <div className="absolute inset-0 opacity-40 mix-blend-multiply" style={{
             backgroundImage: "url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1200&auto=format&fit=crop')",
             backgroundSize: "cover",
