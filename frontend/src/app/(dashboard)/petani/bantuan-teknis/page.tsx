@@ -41,7 +41,7 @@ export default function BantuanTeknisPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Quick Contact Cards */}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-primary-dark rounded-md p-6 md:p-8 shadow-lg text-white relative overflow-hidden">
@@ -51,7 +51,7 @@ export default function BantuanTeknisPage() {
             <div className="relative z-10">
               <h2 className="text-xl font-bold mb-1">Pusat Panggilan Petani</h2>
               <p className="text-green-100 text-sm mb-6">Buka Senin - Sabtu (08:00 - 17:00 WIB)</p>
-              
+
               <div className="space-y-4">
                 <a href="tel:08001234567" className="flex items-center gap-4 bg-white/10 hover:bg-white/20 transition-colors p-4 rounded-md backdrop-blur-sm border border-white/10 group">
                   <div className="w-12 h-12 bg-white text-primary-dark rounded-full flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
@@ -62,7 +62,7 @@ export default function BantuanTeknisPage() {
                     <p className="text-lg font-black tracking-widest">0800-123-4567</p>
                   </div>
                 </a>
-                
+
                 <a href="https://wa.me/6281234567890" target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white/10 hover:bg-white/20 transition-colors p-4 rounded-md backdrop-blur-sm border border-white/10 group">
                   <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                     <MessageSquare className="w-6 h-6" />
@@ -82,10 +82,10 @@ export default function BantuanTeknisPage() {
             </h3>
             <p className="text-sm text-gray-500 font-medium mb-1">Email Koperasi:</p>
             <p className="text-gray-900 font-bold mb-4">bantuan@panendesa.id</p>
-            
+
             <p className="text-sm text-gray-500 font-medium mb-1">Alamat Kantor Pusat:</p>
             <p className="text-gray-900 font-bold text-sm leading-relaxed">
-              Gedung Koperasi Tani Makmur, Jl. Raya Pos No. 12<br/>
+              Gedung Koperasi Tani Makmur, Jl. Raya Pos No. 12<br />
               Kab. Malang, Jawa Timur 65111
             </p>
           </div>
@@ -98,7 +98,7 @@ export default function BantuanTeknisPage() {
             <p className="text-gray-500 font-medium mb-6">Tuliskan kendala Anda, tim kami akan membalas via telepon atau notifikasi aplikasi.</p>
 
             {isSuccess ? (
-              <div className="bg-green-50 border border-green-100 rounded-md p-8 text-center h-[300px] flex flex-col items-center justify-center">
+              <div className="bg-green-50 border border-green-100 rounded-md p-8 text-center h-80 flex flex-col items-center justify-center">
                 <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
@@ -106,7 +106,7 @@ export default function BantuanTeknisPage() {
                 <p className="text-gray-600 font-medium mb-6 max-w-sm">
                   Nomor Tiket Anda: <b>#TKT-8842</b>. Tim kami akan segera menghubungi Anda dalam 1x24 jam kerja.
                 </p>
-                <button 
+                <button
                   onClick={() => setIsSuccess(false)}
                   className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold px-6 py-2.5 rounded-md transition-colors shadow-sm"
                 >
@@ -118,8 +118,8 @@ export default function BantuanTeknisPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       defaultValue="Pak Budi"
                       readOnly
                       className="w-full bg-gray-100 border border-gray-200 text-gray-500 py-3.5 px-4 rounded-md outline-none font-medium cursor-not-allowed"
@@ -140,7 +140,7 @@ export default function BantuanTeknisPage() {
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Detail Kendala</label>
-                  <textarea 
+                  <textarea
                     rows={5}
                     required
                     placeholder="Ceritakan secara rinci kendala yang sedang Anda hadapi agar tim kami bisa cepat membantu..."
@@ -148,14 +148,13 @@ export default function BantuanTeknisPage() {
                   ></textarea>
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isSubmitting}
-                  className={`w-full md:w-auto font-bold text-base py-3.5 px-8 rounded-md transition-all shadow-md flex items-center justify-center gap-2 ml-auto ${
-                    isSubmitting 
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  className={`w-full md:w-auto font-bold text-base py-3.5 px-8 rounded-md transition-all shadow-md flex items-center justify-center gap-2 ml-auto ${isSubmitting
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-primary-dark hover:bg-primary text-white'
-                  }`}
+                    }`}
                 >
                   {isSubmitting ? (
                     <>

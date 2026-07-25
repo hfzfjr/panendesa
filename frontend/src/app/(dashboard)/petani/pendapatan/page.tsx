@@ -142,7 +142,7 @@ export default function LaporanPendapatanPage() {
         {filteredList.map(item => (
           <Link key={item.id} href={`/petani/pendapatan/detail/${item.id}`} className="bg-white rounded-lg border-2 border-gray-100 transition-colors shadow-sm overflow-hidden flex flex-col md:flex-row items-center md:items-stretch cursor-pointer group hover:border-primary-dark">
             <div className="w-full md:w-48 h-48 bg-gray-200 relative shrink-0">
-              <div className="w-full h-full bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+              <div className="w-full h-full bg-linear-to-br from-green-100 to-green-200 flex items-center justify-center">
                 <Wallet className="w-16 h-16 text-green-600" />
               </div>
               <div className="absolute top-3 left-3 bg-primary-dark text-white font-black px-3 py-1 rounded-sm text-xs uppercase tracking-wider shadow-md">
