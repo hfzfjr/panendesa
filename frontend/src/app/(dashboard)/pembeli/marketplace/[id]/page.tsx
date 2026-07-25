@@ -1,40 +1,127 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Star, ShieldCheck, MapPin, Truck, ChevronRight, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Button } from "../../../../../components/ui/Button";
-
-// Dummy data for the product (In real app, we'd fetch this based on params.id)
-const productInfo = {
-  id: "1",
-  name: "Cabai Merah Keriting",
-  price: "Rp 35.000",
-  unit: "kg",
-  village: "Desa Sukamaju",
-  farmer: "Kopdes Tani Makmur",
-  rating: 4.8,
-  sold: "1.2rb",
-  stock: 250,
-  description: "Cabai merah keriting kualitas super yang ditanam oleh Kelompok Tani Makmur di Desa Sukamaju. Ditanam menggunakan pupuk organik tanpa pestisida kimia yang berbahaya. Dipanen pada tingkat kematangan optimal sehingga menghasilkan rasa pedas yang khas dan warna merah cerah. Cocok untuk kebutuhan rumah tangga maupun restoran.",
-  image: "https://images.unsplash.com/photo-1596199050105-6d5d32222916?q=80&w=600&auto=format&fit=crop",
-  images: [
-    "https://images.unsplash.com/photo-1596199050105-6d5d32222916?q=80&w=600&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1588012674991-88fc40632cd2?q=80&w=600&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1506806732259-39c2d0268443?q=80&w=600&auto=format&fit=crop"
-  ]
-};
+import { ErrorState } from "../../../../../components/ui/ErrorState";
+import { apiClient } from "../../../../../lib/api-client";
 
 export default function ProductDetailPage({ params }: { params: { id: string } }) {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [desaData, setDesaData] = useState<any>(null);
+  const [capacityData, setCapacityData] = useState<any>(null);
+  const [trustScoreData, setTrustScoreData] = useState<any>(null);
+
+  const desaId = parseInt(params.id);
+
+  useEffect(() => {
+    const fetchDesaData = async () => {
+      if (isNaN(desaId)) {
+        setError('ID desa tidak valid');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch capacity data
+        const capacityResponse = await apiClient.getCapacity(desaId);
+        if (capacityResponse.success && capacityResponse.data) {
+          setCapacityData(capacityResponse.data);
+        } else {
+          setError(capacityResponse.error || 'Gagal mengambil data kapasitas');
+        }
+
+        // Fetch trust score data
+        const trustScoreResponse = await apiClient.getTrustScoreDesa(desaId);
+        if (trustScoreResponse.success && trustScoreResponse.data) {
+          setTrustScoreData(trustScoreResponse.data);
+        }
+
+        // Get desa name from capacity response or fetch separately
+        // For now, we'll use a placeholder since we don't have a single desa endpoint
+        setDesaData({
+          id: desaId,
+          nama_desa: `Desa #${desaId}`, // Will be updated when we have single desa endpoint
+        });
+      } catch (err) {
+        setError('Terjadi kesalahan saat mengambil data desa');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDesaData();
+  }, [desaId]);
 
   const handleDecrease = () => {
     if (quantity > 1) setQuantity(quantity - 1);
   };
 
   const handleIncrease = () => {
-    if (quantity < productInfo.stock) setQuantity(quantity + 1);
+    const maxStock = capacityData?.kapasitas_tervalidasi_kg || 0;
+    if (quantity < maxStock) setQuantity(quantity + 1);
+  };
+
+  const handleCheckout = () => {
+    // Pass desa_id and quantity to checkout via query params
+    const komoditasId = 1; // Default - should be selected from UI in future
+    const checkoutUrl = `/pembeli/checkout?desa_id=${desaId}&komoditas_id=${komoditasId}&jumlah=${quantity}`;
+    window.location.href = checkoutUrl;
+  };
+
+  if (loading) {
+    return (
+      <main className="max-w-7xl mx-auto pb-24 md:pb-12 min-h-screen bg-gray-100 md:bg-transparent">
+        <div className="animate-pulse">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-0 md:gap-8 lg:gap-10 md:py-8 lg:px-8">
+            <div className="lg:col-span-4 md:col-span-1">
+              <div className="w-full aspect-square md:rounded-2xl bg-gray-200"></div>
+            </div>
+            <div className="lg:col-span-5 md:col-span-1 space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-12 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-24 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="max-w-7xl mx-auto pb-24 md:pb-12 min-h-screen bg-gray-100 md:bg-transparent">
+        <div className="max-w-4xl mx-auto px-4 pt-8">
+          <Link href="/pembeli/marketplace" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary-dark font-bold transition-colors mb-6">
+            <ArrowLeft className="w-5 h-5" />
+            Kembali ke Pasar
+          </Link>
+          <ErrorState message={error} onRetry={() => window.location.reload()} />
+        </div>
+      </main>
+    );
+  }
+
+  const productInfo = {
+    name: "Cabai Merah Keriting",
+    price: "Rp 35.000",
+    unit: "kg",
+    village: desaData?.nama_desa || `Desa #${desaId}`,
+    farmer: "Kopdes Tani Makmur",
+    rating: trustScoreData?.skor_konsistensi_desa ? (trustScoreData.skor_konsistensi_desa / 20).toFixed(1) : "4.5",
+    sold: "1.2rb",
+    stock: capacityData?.kapasitas_tervalidasi_kg || 0,
+    description: "Cabai merah keriting kualitas super yang ditanam oleh Kelompok Tani Makmur. Ditanam menggunakan pupuk organik tanpa pestisida kimia yang berbahaya. Dipanen pada tingkat kematangan optimal sehingga menghasilkan rasa pedas yang khas dan warna merah cerah. Cocok untuk kebutuhan rumah tangga maupun restoran.",
+    image: "https://images.unsplash.com/photo-1596199050105-6d5d32222916?q=80&w=600&auto=format&fit=crop",
+    images: [
+      "https://images.unsplash.com/photo-1596199050105-6d5d32222916?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1588012674991-88fc40632cd2?q=80&w=600&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1506806732259-39c2d0268443?q=80&w=600&auto=format&fit=crop"
+    ]
   };
 
   return (
@@ -163,13 +250,13 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
 
               <div className="text-right">
                 <p className="text-xs text-gray-500 mb-0.5">Sisa Stok</p>
-                <p className="font-bold text-gray-900 text-sm"><span className="text-primary-dark">{productInfo.stock}</span> {productInfo.unit}</p>
+                <p className="font-bold text-gray-900 text-sm"><span className="text-primary-dark">{productInfo.stock.toLocaleString('id-ID')}</span> {productInfo.unit}</p>
               </div>
             </div>
 
             <div className="items-center gap-2 text-xs text-gray-600 mb-5 bg-gray-50 p-2.5 rounded-lg border border-gray-100 hidden md:flex">
               <Truck className="w-4 h-4 shrink-0 text-primary-dark" />
-              <span className="leading-snug">Pengiriman langsung dari Desa Sukamaju</span>
+              <span className="leading-snug">Pengiriman langsung dari {productInfo.village}</span>
             </div>
 
             {/* Action Buttons */}
@@ -178,11 +265,9 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 <ShoppingCart className="w-5 h-5 md:mr-2" />
                 <span className="hidden md:inline">Keranjang</span>
               </Button>
-              <Link href="/pembeli/checkout" className="flex-1">
-                <Button className="w-full h-11 md:h-12 rounded-xl bg-(--color-primary-dark) hover:bg-(--color-primary) text-white font-bold text-sm md:text-base transition-all shadow-md">
-                  Beli Langsung
-                </Button>
-              </Link>
+              <Button onClick={handleCheckout} className="flex-1 h-11 md:h-12 rounded-xl bg-(--color-primary-dark) hover:bg-(--color-primary) text-white font-bold text-sm md:text-base transition-all shadow-md">
+                Beli Langsung
+              </Button>
             </div>
 
           </div>
