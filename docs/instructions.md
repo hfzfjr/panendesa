@@ -44,6 +44,8 @@ Jika instruksi dari pengguna tampak bertentangan dengan salahatu dokumen di atas
 
 - **Refresh Token System**: Sudah diimplementasikan untuk persistent login. Access token berdurasi 2 jam, refresh token berdurasi 30 hari. Refresh token disimpan sebagai SHA-256 hash di database untuk keamanan. Endpoint `/api/auth/refresh` untuk dapat access token baru, `/api/auth/logout` untuk revoke refresh token. Migration `04_refresh_tokens.sql` perlu dijalankan di Supabase.
 
+- **Google OAuth Integration**: Sudah fully functional end-to-end. Frontend menggunakan Supabase-js dengan implicit flow, backend endpoint `/api/auth/oauth-exchange` untuk exchange Supabase access token ke custom JWT. Database trigger `sync_auth_user_to_custom_users()` sinkronkan auth.users ke public.users secara otomatis. **PENTING**: Migration `05_fix_oauth_trigger_permissions.sql` diperlukan untuk fix permission issue pada trigger (SECURITY DEFINER + SET search_path = public, pg_temp) karena trigger dijalankan oleh role supabase_auth_admin yang tidak resolve "users" ke public.users tanpa qualifier schema eksplisit.
+
 ## OAuth Integration Flow
 
 Untuk implementasi Google OAuth di frontend, ikuti alur berikut:
