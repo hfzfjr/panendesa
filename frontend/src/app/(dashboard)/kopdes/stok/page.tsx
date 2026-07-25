@@ -125,7 +125,7 @@ export default function KopdesStokPage() {
             {/* Progress Bar Besar */}
             <div className="h-6 w-full bg-gray-100 rounded-full overflow-hidden flex shadow-inner">
               <div
-                className="h-full bg-gradient-to-r from-[#205C3B] to-[#2ECC71] rounded-full relative"
+                className="h-full bg-linear-to-r from-(--color-primary-dark) to-(--color-primary) rounded-full relative"
                 style={{ width: `${totalEstimasi > 0 ? Math.min((totalEstimasi / 50000) * 100, 100) : 0}%` }}
               >
                 {/* Stripe effect inside progress bar */}
