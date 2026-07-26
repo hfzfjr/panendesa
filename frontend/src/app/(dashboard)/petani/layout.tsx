@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { PetaniSidebar } from "../../../components/petani/PetaniSidebar";
 import { PetaniNavbar } from "../../../components/petani/PetaniNavbar";
 import { PetaniBottomNav } from "../../../components/petani/PetaniBottomNav";
@@ -16,7 +16,9 @@ export default function PetaniDashboardLayout({
       <div className="pt-16 lg:flex">
         <PetaniSidebar />
         <main className="flex-1 lg:ml-64 bg-[#F3F4F6] min-h-[calc(100vh-64px)]">
-          {children}
+          <Suspense fallback={<div className="p-8">Loading...</div>}>
+            {children}
+          </Suspense>
         </main>
       </div>
       <PetaniBottomNav />

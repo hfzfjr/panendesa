@@ -18,8 +18,8 @@ export default function Navbar() {
                 <Link href="/dashboard" className="border-b-[3px] border-[#324F37] pb-1">
                     Dashboard
                 </Link>
-                <Link href="/hasil-panen" className="hover:opacity-75 transition-opacity pb-1">
-                    Hasil Panen
+                <Link href="/pembeli" className="hover:opacity-75 transition-opacity pb-1">
+                    Marketplace
                 </Link>
                 <Link href="/tentang" className="hover:opacity-75 transition-opacity pb-1">
                     Tentang Kami
