@@ -20,11 +20,11 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_SERVICE_KEY=${INTERNAL_SERVICE_KEY}
     ports:
-      - "${BACKEND_PORT:-3001}:3001"
+      - "${BACKEND_PORT:-3011}:3001"
     networks:
       - panendesa-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3001', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" ]
       interval: 30s
       timeout: 10s
       start_period: 5s
@@ -49,11 +49,11 @@ services:
       # Runtime environment variables (if any)
       - NODE_ENV=production
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "${FRONTEND_PORT:-3010}:3000"
     networks:
       - panendesa-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" ]
       interval: 30s
       timeout: 10s
       start_period: 10s

@@ -79,12 +79,12 @@ FRONTEND_STATUS=$(docker compose ps -q frontend | xargs docker inspect -f '{{.St
 if [ "$BACKEND_STATUS" = "running" ] && [ "$FRONTEND_STATUS" = "running" ]; then
     echo -e "${GREEN}=== Deployment Successful ===${NC}"
     echo ""
-    echo -e "${GREEN}Frontend URL: http://localhost:${FRONTEND_PORT:-3000}${NC}"
-    echo -e "${GREEN}Backend URL: http://localhost:${BACKEND_PORT:-3001}${NC}"
+    echo -e "${GREEN}Frontend URL: http://localhost:${FRONTEND_PORT:-3010}${NC}"
+    echo -e "${GREEN}Backend URL: http://localhost:${BACKEND_PORT:-3011}${NC}"
     echo ""
     echo -e "${GREEN}Health Check:${NC}"
-    echo -e "  Backend: curl http://localhost:${BACKEND_PORT:-3001}"
-    echo -e "  Frontend: curl http://localhost:${FRONTEND_PORT:-3000}"
+    echo -e "  Backend: curl http://localhost:${BACKEND_PORT:-3011}"
+    echo -e "  Frontend: curl http://localhost:${FRONTEND_PORT:-3010}"
 else
     echo -e "${RED}=== Deployment Failed ===${NC}"
     echo -e "${RED}Backend status: $BACKEND_STATUS${NC}"
