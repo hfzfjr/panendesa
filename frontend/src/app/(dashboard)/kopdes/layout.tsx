@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { KopdesSidebar } from "../../../components/kopdes/KopdesSidebar";
 import { KopdesNavbar } from "../../../components/kopdes/KopdesNavbar";
 import { KopdesBottomNav } from "../../../components/kopdes/KopdesBottomNav";
@@ -14,7 +14,9 @@ export default function KopdesDashboardLayout({
       <div className="pt-16 lg:flex">
         <KopdesSidebar />
         <main className="flex-1 lg:ml-64 bg-[#F9FAFB] min-h-[calc(100vh-64px)]">
-          {children}
+          <Suspense fallback={<div className="p-8">Loading dashboard...</div>}>
+            {children}
+          </Suspense>
         </main>
       </div>
       <KopdesBottomNav />

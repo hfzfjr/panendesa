@@ -340,10 +340,10 @@ export default function KopdesOrderDetailPage() {
         </div>
       )}
 
-      {error && !error.message?.includes('koneksi') && (
+      {error && !((error as any).message || String(error)).includes('koneksi') && (
         <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 mt-4">
           <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-          <p className="text-red-600 text-sm font-medium">{error.message}</p>
+          <p className="text-red-600 text-sm font-medium">{(error as any).message || String(error)}</p>
         </div>
       )}
 

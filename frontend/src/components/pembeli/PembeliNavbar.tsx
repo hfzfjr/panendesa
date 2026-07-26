@@ -34,16 +34,16 @@ export function PembeliNavbar() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-4 md:gap-6 text-neutral-600">
-          <Link href="/pembeli/notifications" className="hover:text-primary relative" aria-label="Notifikasi">
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-neutral-50 rounded-full"></span>
+        <div className="flex items-center gap-2 md:gap-4 text-neutral-600">
+          <Link href="/auth/login">
+            <button className="text-sm font-bold text-gray-600 hover:text-primary-dark transition-colors px-3 py-2">
+              Masuk
+            </button>
           </Link>
-          <Link href="/pembeli/cart" className="hover:text-primary" aria-label="Keranjang Belanja">
-            <ShoppingCart className="w-5 h-5" />
-          </Link>
-          <Link href="/pembeli/profile" className="w-8 h-8 rounded-full bg-gray-300 overflow-hidden cursor-pointer border-2 border-white shadow-sm hover:ring-2 hover:ring-primary-dark transition-all">
-            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop" alt="Profile" className="w-full h-full object-cover" />
+          <Link href="/auth/register">
+            <button className="text-sm font-bold bg-primary-dark hover:bg-primary text-white rounded-lg px-4 py-2 transition-colors shadow-sm hidden md:block">
+              Daftar
+            </button>
           </Link>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { PembeliNavbar } from "../../../components/pembeli/PembeliNavbar";
 import Footer from "../../../components/layout/Footer";
 import { PembeliBottomNav } from "../../../components/pembeli/PembeliBottomNav";
@@ -12,7 +12,9 @@ export default function PembeliLayout({ children }: { children: React.ReactNode 
 
       {/* Main Content Area */}
       <div className="grow">
-        {children}
+        <Suspense fallback={<div className="p-8">Loading...</div>}>
+          {children}
+        </Suspense>
       </div>
 
       {/* Desktop Footer (Hidden on Mobile) */}

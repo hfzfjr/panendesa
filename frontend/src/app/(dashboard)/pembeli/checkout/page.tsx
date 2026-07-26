@@ -159,81 +159,107 @@ export default function CheckoutPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Kopdes 1 */}
-                    <div className="border border-gray-100 rounded-xl p-4 bg-neutral-50">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-bold text-gray-900 text-sm">Kopdes Tani Makmur</h4>
-                          <p className="text-xs text-gray-500">Ciwidey, Jawa Barat</p>
-                        </div>
-                        <div className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">
-                          300 kg
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-                        <span className="flex items-center gap-1"><Star className="w-3 h-3 text-orange-400 fill-orange-400" /> 4.9/5.0</span>
-                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> 42km</span>
-                      </div>
-
-                      <div className="pt-3 border-t border-gray-200">
-                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Daftar Petani Penyuplai</p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-green-200 text-green-800 flex items-center justify-center font-bold text-[8px]">PB</span>
-                              <span className="font-medium text-gray-700">Pak Budi</span>
+                    {/* Dynamic Rendering of Kopdes based on requested quantity */}
+                    {(() => {
+                      const qty = formData.jumlah_diminta_kg;
+                      const kopdesList = [];
+                      
+                      // First Kopdes provides up to 300kg
+                      if (qty > 0) {
+                        const kopdes1Qty = Math.min(qty, 300);
+                        kopdesList.push(
+                          <div key="kopdes1" className="border border-gray-100 rounded-xl p-4 bg-neutral-50">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h4 className="font-bold text-gray-900 text-sm">Kopdes Tani Makmur</h4>
+                                <p className="text-xs text-gray-500">Ciwidey, Jawa Barat</p>
+                              </div>
+                              <div className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">
+                                {kopdes1Qty} kg
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400">Grade A</span>
-                              <span className="font-bold text-gray-900">150 kg</span>
+                            <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+                              <span className="flex items-center gap-1"><Star className="w-3 h-3 text-orange-400 fill-orange-400" /> 4.9/5.0</span>
+                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> 42km</span>
                             </div>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-green-200 text-green-800 flex items-center justify-center font-bold text-[8px]">IS</span>
-                              <span className="font-medium text-gray-700">Ibu Siti</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400">Grade A</span>
-                              <span className="font-bold text-gray-900">150 kg</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Kopdes 2 */}
-                    <div className="border border-gray-100 rounded-xl p-4 bg-neutral-50">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h4 className="font-bold text-gray-900 text-sm">Kopdes Harapan Mulya</h4>
-                          <p className="text-xs text-gray-500">Lembang, Jawa Barat</p>
-                        </div>
-                        <div className="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">
-                          200 kg
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-                        <span className="flex items-center gap-1"><Star className="w-3 h-3 text-orange-400 fill-orange-400" /> 4.7/5.0</span>
-                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> 18km</span>
-                      </div>
-
-                      <div className="pt-3 border-t border-gray-200">
-                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Daftar Petani Penyuplai</p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-green-200 text-green-800 flex items-center justify-center font-bold text-[8px]">PA</span>
-                              <span className="font-medium text-gray-700">Pak Andi</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-400">Grade A</span>
-                              <span className="font-bold text-gray-900">200 kg</span>
+      
+                            <div className="pt-3 border-t border-gray-200">
+                              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Daftar Petani Penyuplai</p>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-5 h-5 rounded-full bg-green-200 text-green-800 flex items-center justify-center font-bold text-[8px]">PB</span>
+                                    <span className="font-medium text-gray-700">Pak Budi</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-gray-400">Grade A</span>
+                                    <span className="font-bold text-gray-900">{Math.min(kopdes1Qty, 150)} kg</span>
+                                  </div>
+                                </div>
+                                {kopdes1Qty > 150 && (
+                                  <div className="flex justify-between items-center text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-5 h-5 rounded-full bg-green-200 text-green-800 flex items-center justify-center font-bold text-[8px]">IS</span>
+                                      <span className="font-medium text-gray-700">Ibu Siti</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-[10px] text-gray-400">Grade A</span>
+                                      <span className="font-bold text-gray-900">{kopdes1Qty - 150} kg</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    </div>
+                        );
+                      }
+
+                      // Second Kopdes provides the rest if qty > 300
+                      if (qty > 300) {
+                        const kopdes2Qty = qty - 300;
+                        kopdesList.push(
+                          <div key="kopdes2" className="border border-gray-100 rounded-xl p-4 bg-neutral-50 relative overflow-hidden">
+                            {/* Highlight border for Smart Split */}
+                            <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
+                            <div className="flex justify-between items-start mb-2 pl-2">
+                              <div>
+                                <h4 className="font-bold text-gray-900 text-sm flex items-center gap-1">
+                                  Kopdes Harapan Mulya
+                                </h4>
+                                <p className="text-xs text-gray-500">Lembang, Jawa Barat</p>
+                              </div>
+                              <div className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded">
+                                +{kopdes2Qty} kg
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-gray-500 mb-4 pl-2">
+                              <span className="flex items-center gap-1"><Star className="w-3 h-3 text-orange-400 fill-orange-400" /> 4.7/5.0</span>
+                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> 18km</span>
+                            </div>
+      
+                            <div className="pt-3 border-t border-gray-200 pl-2">
+                              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                Daftar Petani Penyuplai (Smart Split)
+                              </p>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center text-xs">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-5 h-5 rounded-full bg-yellow-200 text-yellow-800 flex items-center justify-center font-bold text-[8px]">PA</span>
+                                    <span className="font-medium text-gray-700">Pak Andi</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-gray-400">Grade A</span>
+                                    <span className="font-bold text-gray-900">{kopdes2Qty} kg</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      return kopdesList;
+                    })()}
                   </div>
                 </div>
 

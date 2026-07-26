@@ -1,114 +1,147 @@
 import React from "react";
 import Link from "next/link";
-import { MapPin } from "lucide-react";
-import { Button } from "../ui/Button";
+import { MapPin, Star, ShoppingCart, ShieldCheck } from "lucide-react";
 
 interface MarketplaceResultsProps {
   desaData?: any[];
 }
 
 export function MarketplaceResults({ desaData = [] }: MarketplaceResultsProps) {
-  // Use real desaData if available, otherwise show empty state
-  if (desaData.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 md:p-12 text-center flex flex-col items-center">
-        <MapPin className="w-16 h-16 text-gray-300 mb-4" />
-        <h3 className="font-bold text-gray-900 text-lg mb-2">Belum ada desa tersedia</h3>
-        <p className="text-gray-500 text-sm max-w-sm">
-          Data desa sedang dimuat atau belum tersedia. Silakan coba lagi nanti.
-        </p>
-      </div>
-    );
-  }
+  // We use mock products for the UI representation as requested by the user,
+  // attaching them to existing desaData if available to keep links working.
+  const mockProducts = [
+    {
+      id: desaData[0]?.desa_id || 1,
+      name: "Cabai Merah Keriting Premium",
+      price: "Rp 35.000",
+      unit: "kg",
+      village: desaData[0]?.nama_desa || "Desa Cibodas",
+      rating: 4.8,
+      sold: "1.2rb",
+      grade: "Grade A",
+      image: "https://images.unsplash.com/photo-1596199050105-6d5d32222916?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: desaData[1]?.desa_id || 2,
+      name: "Tomat Merah Segar",
+      price: "Rp 12.000",
+      unit: "kg",
+      village: desaData[1]?.nama_desa || "Desa Sukamaju",
+      rating: 4.9,
+      sold: "850",
+      grade: "Grade A",
+      image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: desaData[2]?.desa_id || 3,
+      name: "Bawang Merah Besar",
+      price: "Rp 28.000",
+      unit: "kg",
+      village: desaData[2]?.nama_desa || "Desa Brebes",
+      rating: 4.7,
+      sold: "2.1rb",
+      grade: "Grade B",
+      image: "https://images.unsplash.com/photo-1618512496248-a07ce83aa8cb?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: desaData[3]?.desa_id || 4,
+      name: "Kentang Dieng Super",
+      price: "Rp 18.000",
+      unit: "kg",
+      village: desaData[3]?.nama_desa || "Desa Dieng Kulon",
+      rating: 5.0,
+      sold: "3.4rb",
+      grade: "Grade A",
+      image: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: desaData[4]?.desa_id || 5,
+      name: "Wortel Manis Brastagi",
+      price: "Rp 15.000",
+      unit: "kg",
+      village: desaData[4]?.nama_desa || "Desa Brastagi",
+      rating: 4.6,
+      sold: "500",
+      grade: "Grade B",
+      image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: desaData[5]?.desa_id || 6,
+      name: "Sayur Sawi Hijau Organik",
+      price: "Rp 8.000",
+      unit: "ikat",
+      village: desaData[5]?.nama_desa || "Desa Lembang",
+      rating: 4.9,
+      sold: "4.2rb",
+      grade: "Grade C",
+      image: "https://images.unsplash.com/photo-1622378930887-2ee0157f9202?q=80&w=600&auto=format&fit=crop"
+    }
+  ];
+
+  const getGradeColor = (grade: string) => {
+    if (grade.includes("A")) return "bg-gradient-to-r from-amber-400 to-yellow-500 text-white shadow-yellow-500/30";
+    if (grade.includes("B")) return "bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-slate-500/30";
+    return "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-green-500/30";
+  };
 
   return (
-    <div className="flex flex-col gap-6 mb-8">
-      {desaData.map((item) => {
-        const progressPercent = item.kapasitas_estimasi_kg > 0
-          ? Math.min(100, Math.round((item.kapasitas_tervalidasi_kg / item.kapasitas_estimasi_kg) * 100))
-          : 0;
-
-        // Determine score color based on skor_konsistensi
-        const getScoreColor = (score: number) => {
-          if (score >= 90) return "bg-primary-dark text-white";
-          if (score >= 80) return "bg-neutral-600 text-white";
-          return "bg-neutral-200 text-gray-700";
-        };
-
-        const getScoreLabel = (score: number) => {
-          if (score >= 90) return "SANGAT KONSISTEN";
-          if (score >= 80) return "KONSISTEN";
-          return "CUKUP";
-        };
-
-        const scoreColor = getScoreColor(item.skor_konsistensi);
-        const scoreLabel = getScoreLabel(item.skor_konsistensi);
-
-        return (
-          <div key={item.desa_id} className="bg-white rounded-2xl border border-gray-200 p-4 md:p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start hover:shadow-md transition-shadow">
-
-            {/* Image Container */}
-            <Link href={`/pembeli/marketplace/${item.desa_id}`} className="w-full md:w-48 h-48 rounded-xl overflow-hidden relative shrink-0 block group">
-              <img src="https://images.unsplash.com/photo-1595855761081-37d45cb04791?q=80&w=600&auto=format&fit=crop" alt={item.nama_desa} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute top-3 left-3 px-3 py-1 text-white text-xs font-bold rounded-full bg-primary">
-                Grade A
-              </div>
-            </Link>
-
-            {/* Content Container */}
-            <div className="flex-1 w-full flex flex-col justify-between h-full min-h-48">
-
-              {/* Header: Title & Badge */}
-              <div className="flex flex-col md:flex-row justify-between items-start mb-4 gap-2">
-                <div>
-                  <Link href={`/pembeli/marketplace/${item.desa_id}`}>
-                    <h3 className="text-xl font-bold text-gray-900 hover:text-primary-dark transition-colors">{item.nama_desa}</h3>
-                  </Link>
-                  <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-1">
-                    <MapPin className="w-4 h-4" />
-                    {item.latitude && item.longitude ? `${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` : 'Lokasi tidak tersedia'}
-                  </div>
-                </div>
-
-                <div className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 ${scoreColor}`}>
-                  <span>{item.skor_konsistensi.toFixed(1)}</span>
-                  <span className="uppercase tracking-wider text-[10px]">{scoreLabel}</span>
-                </div>
+    <div className="mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        {mockProducts.map((product) => (
+          <Link href={`/pembeli/marketplace/${product.id}`} key={product.id} className="group flex flex-col h-full bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 overflow-hidden relative">
+            
+            {/* Image Section */}
+            <div className="w-full aspect-square overflow-hidden bg-gray-50 relative">
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out" />
+              
+              {/* Overlay Gradient for Text */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              
+              {/* Premium Grade Badge */}
+              <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full flex items-center gap-1 text-[10px] font-black uppercase tracking-wider shadow-md ${getGradeColor(product.grade)}`}>
+                <ShieldCheck className="w-3 h-3" />
+                {product.grade}
               </div>
 
-              {/* Progress Bar (Stock) */}
-              <div className="mb-6">
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-xs font-semibold text-gray-500">Stok Tervalidasi</span>
-                  <span className="text-xs font-bold text-primary-dark">
-                    {item.kapasitas_tervalidasi_kg.toLocaleString('id-ID')}kg / <span className="text-gray-500">{item.kapasitas_estimasi_kg.toLocaleString('id-ID')}kg (Est)</span>
-                  </span>
-                </div>
-                <div className="w-full bg-neutral-100 rounded-full h-2.5 overflow-hidden flex">
-                  <div className="bg-primary-dark h-full rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }}></div>
-                </div>
+              {/* Hover Action Button (Hidden on Mobile, Shows on Hover in Desktop) */}
+              <div className="absolute bottom-3 right-3 translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hidden md:flex">
+                <button className="bg-white text-[var(--color-primary-dark)] p-2.5 rounded-full shadow-xl hover:bg-green-50 hover:scale-110 transition-transform">
+                  <ShoppingCart className="w-5 h-5" />
+                </button>
               </div>
-
-              {/* Footer: Price & Button */}
-              <div className="flex flex-col sm:flex-row justify-between items-center sm:items-end mt-auto pt-4 border-t border-gray-100 gap-4">
-                <div className="w-full sm:w-auto">
-                  <div className="text-xs font-semibold text-gray-500 mb-1">Kapasitas Tersedia</div>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-primary-dark">{item.kapasitas_tervalidasi_kg.toLocaleString('id-ID')}</span>
-                    <span className="text-xs text-gray-500 font-medium">kg</span>
-                  </div>
-                </div>
-                <Link href={`/pembeli/marketplace/${item.desa_id}`} className="w-full sm:w-auto">
-                  <Button className="w-full bg-primary-dark hover:bg-primary px-8 shadow-sm">
-                    Lihat Detail
-                  </Button>
-                </Link>
-              </div>
-
             </div>
-          </div>
-        );
-      })}
+
+            {/* Content Section */}
+            <div className="p-4 flex flex-col flex-1 relative bg-white">
+              <h3 className="font-extrabold text-gray-900 text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-[var(--color-primary-dark)] transition-colors leading-snug">
+                {product.name}
+              </h3>
+              
+              <div className="text-lg md:text-xl font-black text-gray-900 mb-3 tracking-tight">
+                {product.price}
+                <span className="text-xs font-medium text-gray-400 ml-0.5">/{product.unit}</span>
+              </div>
+              
+              <div className="mt-auto pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2.5 font-medium">
+                  <MapPin className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                  <span className="truncate">{product.village}</span>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-xs">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="font-bold text-gray-700">{product.rating}</span>
+                  </div>
+                  <div className="text-[11px] font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
+                    Terjual {product.sold}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
