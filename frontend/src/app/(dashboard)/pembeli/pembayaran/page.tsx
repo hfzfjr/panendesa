@@ -180,7 +180,7 @@ export default function PaymentPage() {
 
           {/* Bottom Actions (Desktop Only) */}
           <div className="hidden lg:flex items-center gap-4 mt-4">
-            <Link href="/pembeli/payment/success" className="w-full sm:w-auto">
+            <Link href="/pembeli/pembayaran/success" className="w-full sm:w-auto">
               <Button className="w-full h-12 rounded-xl bg-primary-dark hover:bg-primary font-bold px-8 transition-colors">
                 Cek Status Pembayaran
               </Button>
@@ -262,7 +262,7 @@ export default function PaymentPage() {
 
             {/* Bottom Actions (Mobile Only) */}
             <div className="flex lg:hidden flex-col gap-4 mt-6 pt-4 border-t border-gray-100">
-              <Link href="/dashboard/pembeli/payment/success" className="w-full">
+              <Link href="/pembeli/pembayaran/success" className="w-full">
                 <Button className="w-full h-12 rounded-xl bg-primary-dark hover:bg-primary font-bold px-8 transition-colors">
                   Cek Status Pembayaran
                 </Button>

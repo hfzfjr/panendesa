@@ -71,7 +71,7 @@ export default function OrderCompletedPage() {
     return (
       <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/pembeli/orders" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
+          <Link href="/pembeli/pesanan" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
             <ArrowLeft className="w-6 h-6 text-gray-800" />
           </Link>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">Pesanan Selesai</h1>
@@ -86,7 +86,7 @@ export default function OrderCompletedPage() {
     return (
       <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-12 pb-28 min-h-screen">
         <div className="flex items-center gap-3 mb-6">
-          <Link href="/pembeli/orders" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
+          <Link href="/pembeli/pesanan" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
             <ArrowLeft className="w-6 h-6 text-gray-800" />
           </Link>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900">Pesanan Selesai</h1>
@@ -97,7 +97,7 @@ export default function OrderCompletedPage() {
           <p className="text-gray-500 text-sm mb-6 max-w-sm">
             Anda belum memiliki pesanan yang telah selesai. Pesanan yang selesai akan muncul di halaman ini.
           </p>
-          <Link href="/pembeli/orders">
+          <Link href="/pembeli/pesanan">
             <Button className="px-8 h-12 rounded-xl bg-(--color-primary-dark) hover:bg-(--color-primary) text-white font-bold transition-colors">
               Lihat Semua Pesanan
             </Button>
@@ -115,7 +115,7 @@ export default function OrderCompletedPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/pembeli/orders" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
+        <Link href="/pembeli/pesanan" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
           <ArrowLeft className="w-6 h-6 text-gray-800" />
         </Link>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">Pesanan Selesai</h1>

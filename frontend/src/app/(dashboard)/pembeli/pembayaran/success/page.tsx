@@ -86,7 +86,7 @@ export default function PaymentSuccessPage() {
 
       {/* Action Buttons */}
       <div className="w-full flex flex-col sm:flex-row gap-4 mt-2">
-        <Link href="/pembeli/orders/tracking" className="flex-1 w-full">
+        <Link href="/pembeli/pesanan/tracking" className="flex-1 w-full">
           <Button className="w-full h-12 rounded-xl bg-(--color-primary-dark) hover:bg-(--color-primary) text-white font-bold text-sm md:text-base transition-colors flex items-center justify-center gap-2">
             <TruckIcon className="w-5 h-5" />
             Lacak Pesanan
