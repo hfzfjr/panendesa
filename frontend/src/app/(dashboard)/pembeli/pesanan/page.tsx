@@ -189,7 +189,7 @@ export default function OrderHistoryPage() {
                     <Button variant="custom" className="px-6 py-2 h-10 rounded-xl bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold text-sm transition-colors">
                       Beli Lagi
                     </Button>
-                    <Link href={`/pembeli/orders/completed`}>
+                    <Link href={`/pembeli/pesanan/completed`}>
                       <Button className="px-6 py-2 h-10 rounded-xl bg-(--color-primary-dark) hover:bg-(--color-primary) text-white font-bold text-sm transition-colors">
                         Lihat Detail
                       </Button>
@@ -202,7 +202,7 @@ export default function OrderHistoryPage() {
                       <span className="hidden sm:inline">Chat Penjual</span>
                       <span className="sm:hidden">Chat</span>
                     </Button>
-                    <Link href={`/pembeli/orders/tracking`}>
+                    <Link href={`/pembeli/pesanan/tracking`}>
                       <Button className="px-6 py-2 h-10 rounded-xl bg-(--color-primary-dark) hover:bg-(--color-primary) text-white font-bold text-sm transition-colors">
                         Lacak Pesanan
                       </Button>
