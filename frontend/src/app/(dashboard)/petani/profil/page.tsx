@@ -12,7 +12,7 @@ export default function PetaniProfilePage() {
     { icon: User, label: "Informasi Pribadi", href: "#" },
     { icon: MapPin, label: "Alamat Lahan & Rumah", href: "#" },
     { icon: ClipboardCheck, label: "Rekening Bank", href: "#" },
-    { icon: Bell, label: "Notifikasi", href: "/petani/notifications" },
+    { icon: Bell, label: "Notifikasi", href: "/petani/notifikasi" },
     { icon: Settings, label: "Pengaturan Akun", href: "#" },
     { icon: HelpCircle, label: "Konsultasi Pertanian", href: "/petani/bantuan-teknis" },
   ];

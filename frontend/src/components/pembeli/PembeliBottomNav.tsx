@@ -11,8 +11,8 @@ export function PembeliBottomNav() {
   const navItems = [
     { name: "Beranda", href: "/pembeli", icon: Home },
     { name: "Pasar", href: "/pembeli/marketplace", icon: ShoppingBag },
-    { name: "Pesanan", href: "/pembeli/orders", icon: Package },
-    { name: "Profil", href: "/pembeli/profile", icon: User },
+    { name: "Pesanan", href: "/pembeli/pesanan", icon: Package },
+    { name: "Profil", href: "/pembeli/profil", icon: User },
   ];
 
   return (

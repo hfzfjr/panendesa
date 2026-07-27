@@ -12,7 +12,7 @@ export default function OrderTrackingPage() {
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/pembeli/orders" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
+        <Link href="/pembeli/pesanan" className="p-2 hover:bg-gray-100 rounded-full transition-colors -ml-2">
           <ArrowLeft className="w-6 h-6 text-gray-800" />
         </Link>
         <h1 className="text-xl md:text-2xl font-bold text-gray-900">Pelacakan Pesanan</h1>

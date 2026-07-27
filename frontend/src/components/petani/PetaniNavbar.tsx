@@ -37,11 +37,11 @@ export function PetaniNavbar() {
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 text-neutral-600">
-          <Link href="/petani/notifications" className="hover:text-primary relative" aria-label="Notifikasi">
+          <Link href="/petani/notifikasi" className="hover:text-primary relative" aria-label="Notifikasi">
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-neutral-50 rounded-full"></span>
           </Link>
-          <Link href="/petani/profile" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer">
+          <Link href="/petani/profil" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer">
             <img
               src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?q=80&w=100&auto=format&fit=crop"
               alt="Profile"

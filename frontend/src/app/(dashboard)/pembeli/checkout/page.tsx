@@ -74,7 +74,7 @@ export default function CheckoutPage() {
 
         // Redirect to orders page after short delay
         setTimeout(() => {
-          router.push('/pembeli/orders');
+          router.push('/pembeli/pesanan');
         }, 2000);
       } else {
         setError(response.error || 'Gagal membuat pesanan');

@@ -37,11 +37,11 @@ export function KopdesNavbar() {
         </div>
 
         <div className="flex items-center gap-4 md:gap-6 text-neutral-600">
-          <Link href="/kopdes/notifications" className="hover:text-primary relative" aria-label="Notifikasi">
+          <Link href="/kopdes/notifikasi" className="hover:text-primary relative" aria-label="Notifikasi">
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-neutral-50 rounded-full"></span>
           </Link>
-          <Link href="/kopdes/profile" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer">
+          <Link href="/kopdes/profil" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer">
             <img
               src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=100&auto=format&fit=crop"
               alt="Profile"

@@ -14,14 +14,14 @@ export default function PetaniPengaturanPage() {
       
       {/* Header */}
       <div className="flex items-center gap-4 border-b border-gray-100 pb-4 pt-2 mb-6">
-        <Link href="/petani/profile" className="w-10 h-10 bg-white border border-gray-200 rounded-md flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors">
+        <Link href="/petani/profil" className="w-10 h-10 bg-white border border-gray-200 rounded-md flex items-center justify-center text-gray-600 hover:bg-gray-50 transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
           <div className="flex items-center gap-2 text-xs md:text-sm text-gray-500 font-medium mb-1">
             <Link href="/petani" className="hover:text-primary-dark">Halaman Utama</Link>
             <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
-            <Link href="/petani/profile" className="hover:text-primary-dark">Profil</Link>
+            <Link href="/petani/profil" className="hover:text-primary-dark">Profil</Link>
             <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
             <span className="text-gray-900 font-bold">Pengaturan</span>
           </div>
