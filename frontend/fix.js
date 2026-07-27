@@ -54,7 +54,7 @@ content = content.replace(
 // Fitur Unggulan
 content = content.replace(
   /<section id="fitur" className="w-full max-w-7xl px-4 lg:px-8 py-24">/,
-  '<section id="fitur" className="w-full bg-gradient-to-b from-white to-green-50/50 py-28">\n          <div className="max-w-7xl mx-auto px-4 lg:px-8">'
+  '<section id="fitur" className="w-full bg-linear-to-b from-white to-green-50/50 py-28">\n          <div className="max-w-7xl mx-auto px-4 lg:px-8">'
 );
 // Fix the closing div for Fitur Unggulan
 content = content.replace(

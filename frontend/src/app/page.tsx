@@ -53,15 +53,15 @@ export default function Home() {
               </div>
 
               {/* Floating Glassmorphism Design */}
-              <div className="hidden lg:flex relative items-center justify-center h-full min-h-[500px]">
+              <div className="hidden lg:flex relative items-center justify-center h-full min-h-125">
                 {/* Main Image */}
-                <div className="relative w-80 h-[420px] rounded-[32px] overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-transform duration-500 z-10 border-4 border-white/20">
+                <div className="relative w-80 h-105 rounded-4xl overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-transform duration-500 z-10 border-4 border-white/20">
                   <img 
                     src="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop" 
                     alt="Sayuran Segar" 
                     className="object-cover w-full h-full"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent"></div>
                   <div className="absolute bottom-6 left-6 right-6">
                     <div className="inline-block px-3 py-1 bg-green-500/90 backdrop-blur rounded-full text-white text-xs font-bold mb-2">
                       Panen Hari Ini
@@ -131,19 +131,19 @@ export default function Home() {
         </section>
 
         {/* Daftar Komoditas / Marketplace Preview */}
-        <section id="komoditas" className="w-full bg-gradient-to-b from-[#FAFAFA] to-green-50/40 py-28">
+        <section id="komoditas" className="w-full bg-linear-to-b from-[#FAFAFA] to-green-50/40 py-28">
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <div className="flex justify-between items-end mb-10">
               <div>
-                <span className="text-[var(--color-primary)] font-bold text-sm tracking-wider uppercase mb-2 block">
+                <span className="text-(--color-primary) font-bold text-sm tracking-wider uppercase mb-2 block">
                   Marketplace
                 </span>
-                <h2 className="text-3xl font-extrabold text-[var(--color-neutral-900)]">
+                <h2 className="text-3xl font-extrabold text-(--color-neutral-900)">
                   Komoditas Tersedia
                 </h2>
               </div>
               <Link href="/pembeli">
-                <Button variant="outline" className="hidden md:flex items-center gap-2 border-[var(--color-primary-dark)] text-[var(--color-primary-dark)] hover:bg-green-50">
+                <Button variant="outline" className="hidden md:flex items-center gap-2 border-(--color-primary-dark) text-(--color-primary-dark) hover:bg-green-50">
                   Lihat Semua
                 </Button>
               </Link>
@@ -170,7 +170,7 @@ export default function Home() {
                       <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out" />
                       
                       {/* Overlay Gradient for Text */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                       
                       {/* Premium Grade Badge */}
                       <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full flex items-center gap-1 text-[10px] font-black uppercase tracking-wider shadow-md ${getGradeColor(item.grade)}`}>
@@ -181,7 +181,7 @@ export default function Home() {
                     
                     {/* Content Section */}
                     <div className="p-4 flex flex-col flex-1 relative bg-white">
-                      <h3 className="font-extrabold text-gray-900 text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-[var(--color-primary-dark)] transition-colors leading-snug">
+                      <h3 className="font-extrabold text-gray-900 text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-(--color-primary-dark) transition-colors leading-snug">
                         {item.name}
                       </h3>
                       
@@ -214,7 +214,7 @@ export default function Home() {
             
             <div className="mt-8 md:hidden flex justify-center">
               <Link href="/pembeli">
-                <Button variant="outline" className="w-full border-[var(--color-primary-dark)] text-[var(--color-primary-dark)]">
+                <Button variant="outline" className="w-full border-(--color-primary-dark) text-(--color-primary-dark)">
                   Lihat Semua Komoditas
                 </Button>
               </Link>
@@ -264,8 +264,8 @@ export default function Home() {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {/* Card 1 */}
-              <div className="bg-white rounded-[32px] p-8 shadow-sm hover:shadow-2xl border border-gray-100 transform hover:-translate-y-2 transition-all duration-300 group">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white rounded-4xl p-8 shadow-sm hover:shadow-2xl border border-gray-100 transform hover:-translate-y-2 transition-all duration-300 group">
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-green-400 to-green-600 flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <ShieldCheck className="w-8 h-8" />
                 </div>
                 <h3 className="text-2xl font-bold text-neutral-900 mb-4">100% Transparan</h3>
@@ -275,8 +275,8 @@ export default function Home() {
               </div>
 
               {/* Card 2 */}
-              <div className="bg-white rounded-[32px] p-8 shadow-sm hover:shadow-2xl border border-gray-100 transform hover:-translate-y-2 transition-all duration-300 group">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white rounded-4xl p-8 shadow-sm hover:shadow-2xl border border-gray-100 transform hover:-translate-y-2 transition-all duration-300 group">
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <Truck className="w-8 h-8" />
                 </div>
                 <h3 className="text-2xl font-bold text-neutral-900 mb-4">Pengiriman Cepat</h3>
@@ -286,8 +286,8 @@ export default function Home() {
               </div>
 
               {/* Card 3 */}
-              <div className="bg-white rounded-[32px] p-8 shadow-sm hover:shadow-2xl border border-gray-100 transform hover:-translate-y-2 transition-all duration-300 group">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="bg-white rounded-4xl p-8 shadow-sm hover:shadow-2xl border border-gray-100 transform hover:-translate-y-2 transition-all duration-300 group">
+                <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white mb-8 shadow-lg group-hover:scale-110 transition-transform duration-300">
                   <Tag className="w-8 h-8" />
                 </div>
                 <h3 className="text-2xl font-bold text-neutral-900 mb-4">Harga Paling Adil</h3>
@@ -300,7 +300,7 @@ export default function Home() {
         </section>
 
         {/* Fitur Unggulan */}
-        <section id="fitur" className="w-full bg-gradient-to-b from-white to-green-50/50 py-28">
+        <section id="fitur" className="w-full bg-linear-to-b from-white to-green-50/50 py-28">
           <div className="max-w-7xl mx-auto px-4 lg:px-8">
             <div className="text-center mb-16">
               <span className="text-(--color-primary) font-bold text-sm tracking-wider uppercase mb-3 block">
@@ -503,7 +503,7 @@ export default function Home() {
 
         {/* Mega CTA Section */}
         <section className="w-full px-4 lg:px-8 pb-12 pt-8">
-          <div className="max-w-7xl mx-auto bg-gradient-to-br from-[#2c4c31] to-[#1a2e1e] rounded-[40px] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
+          <div className="max-w-7xl mx-auto bg-linear-to-br from-[#2c4c31] to-[#1a2e1e] rounded-4xl p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
             {/* Decorative background circles */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full transform translate-x-1/3 -translate-y-1/3 blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-400/10 rounded-full transform -translate-x-1/3 translate-y-1/3 blur-3xl"></div>
