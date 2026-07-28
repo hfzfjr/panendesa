@@ -10,7 +10,7 @@ services:
     environment:
       # Runtime environment variables (secrets)
       # These are loaded from .env file, NOT baked into image
-      - PORT=${BACKEND_PORT:-3001}
+      - PORT=3001
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
