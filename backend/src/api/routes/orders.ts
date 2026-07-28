@@ -229,6 +229,83 @@ router.get('/kopdes/:kopdes_id', verifyToken, async (req: Request, res: Response
 });
 
 /**
+ * GET /api/orders/pembeli/:pembeli_id
+ * Mendapatkan daftar order milik pembeli
+ * Role: pembeli (milik sendiri), admin
+ */
+router.get('/pembeli/:pembeli_id', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { pembeli_id } = req.params;
+
+    // Validasi: pembeli_id harus string
+    if (Array.isArray(pembeli_id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Parameter pembeli_id tidak valid'
+      });
+    }
+
+    const pembeliIdNum = parseInt(pembeli_id);
+
+    if (isNaN(pembeliIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: 'pembeli_id harus berupa angka'
+      });
+    }
+
+    const userRole = req.user!.role;
+    const userId = req.user!.user_id;
+
+    // RBAC: pembeli hanya boleh akses data miliknya sendiri
+    if (userRole === 'pembeli') {
+      if (pembeliIdNum !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke order pembeli lain'
+        });
+      }
+    }
+
+    // Role lain selain admin dan pembeli ditolak
+    if (userRole !== 'pembeli' && userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Anda tidak memiliki akses ke endpoint ini'
+      });
+    }
+
+    // Admin boleh akses semua data, tidak perlu validasi tambahan
+
+    // Fetch orders
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, harga_terkunci, created_at')
+      .eq('pembeli_id', pembeliIdNum)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[Orders] Error fetching orders:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Gagal mengambil data order'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('[Orders] Server error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+/**
  * GET /api/orders/:id
  * Mendapatkan detail satu order
  * Role: pembeli (milik sendiri), petugas_kopdes (order terkait kopdes miliknya), admin
@@ -273,7 +350,10 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
         harga_terkunci,
         created_at,
         updated_at,
-        users!orders_pembeli_id_fkey (nama)
+        users!orders_pembeli_id_fkey (nama),
+        komoditas (
+          nama_komoditas
+        )
       `)
       .eq('id', orderIdNum)
       .single();
@@ -345,83 +425,6 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     return res.json({
       success: true,
       data: flattenedData
-    });
-  } catch (error) {
-    console.error('[Orders] Server error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Terjadi kesalahan server'
-    });
-  }
-});
-
-/**
- * GET /api/orders/:pembeli_id
- * Mendapatkan daftar order milik pembeli
- * Role: pembeli (milik sendiri), admin
- */
-router.get('/:pembeli_id', verifyToken, async (req: Request, res: Response) => {
-  try {
-    const { pembeli_id } = req.params;
-
-    // Validasi: pembeli_id harus string
-    if (Array.isArray(pembeli_id)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Parameter pembeli_id tidak valid'
-      });
-    }
-
-    const pembeliIdNum = parseInt(pembeli_id);
-
-    if (isNaN(pembeliIdNum)) {
-      return res.status(400).json({
-        success: false,
-        error: 'pembeli_id harus berupa angka'
-      });
-    }
-
-    const userRole = req.user!.role;
-    const userId = req.user!.user_id;
-
-    // RBAC: pembeli hanya boleh akses data miliknya sendiri
-    if (userRole === 'pembeli') {
-      if (pembeliIdNum !== userId) {
-        return res.status(403).json({
-          success: false,
-          error: 'Anda tidak memiliki akses ke order pembeli lain'
-        });
-      }
-    }
-
-    // Role lain selain admin dan pembeli ditolak
-    if (userRole !== 'pembeli' && userRole !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Anda tidak memiliki akses ke endpoint ini'
-      });
-    }
-
-    // Admin boleh akses semua data, tidak perlu validasi tambahan
-
-    // Fetch orders
-    const { data, error } = await supabase
-      .from('orders')
-      .select('id, komoditas_id, kopdes_id, jumlah_diminta_kg, status, harga_final_per_kg, harga_terkunci, created_at')
-      .eq('pembeli_id', pembeliIdNum)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('[Orders] Error fetching orders:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Gagal mengambil data order'
-      });
-    }
-
-    return res.json({
-      success: true,
-      data: data || []
     });
   } catch (error) {
     console.error('[Orders] Server error:', error);

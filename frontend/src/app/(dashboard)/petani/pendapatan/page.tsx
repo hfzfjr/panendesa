@@ -10,14 +10,16 @@ import { ErrorState } from "@/components/ui/ErrorState";
 interface FairShareItem {
   id: number;
   order_id: number;
-  petani_id: number;
+  intake_grading_id: number;
   kontribusi_kg: number;
   grade: string;
+  pengali_grade: number;
   jumlah_diterima: number;
   fee_kopdes_persen: number;
   fee_kopdes_nominal: number;
-  created_at: string;
+  harga_final_per_kg: number;
   komoditas_nama?: string;
+  created_at: string;
 }
 
 export default function LaporanPendapatanPage() {
@@ -154,7 +156,7 @@ export default function LaporanPendapatanPage() {
               <div>
                 <h3 className="text-2xl font-black text-gray-900 mb-1">{item.komoditas_nama || `Komoditas #${item.order_id}`}</h3>
                 <p className="text-gray-500 font-bold text-sm md:text-base">{item.kontribusi_kg} kg (Grade {item.grade}) • {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                <p className="text-gray-400 text-xs mt-1">Fee Kopdes: {item.fee_kopdes_persen}%</p>
+                <p className="text-gray-400 text-xs mt-1">Fee Kopdes: {item.fee_kopdes_persen}% (Rp {item.fee_kopdes_nominal.toLocaleString('id-ID')})</p>
               </div>
               <div className="mt-4 flex items-end justify-between">
                 <div>

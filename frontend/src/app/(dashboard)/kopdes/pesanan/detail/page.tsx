@@ -34,6 +34,14 @@ interface Order {
   komoditas_nama?: string;
 }
 
+interface DistributionItem {
+  petani_id: number;
+  petani_nama?: string;
+  kontribusi_kg: number;
+  grade: string;
+  jumlah_diterima: number;
+}
+
 export default function KopdesOrderDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -45,6 +53,9 @@ export default function KopdesOrderDetailPage() {
   const [hargaInput, setHargaInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isCalculatingFairShare, setIsCalculatingFairShare] = useState(false);
+  const [distributionData, setDistributionData] = useState<DistributionItem[] | null>(null);
+  const [fairShareError, setFairShareError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -101,6 +112,30 @@ export default function KopdesOrderDetailPage() {
       setError({ message: 'Terjadi kesalahan koneksi' });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleCalculateFairShare = async () => {
+    setIsCalculatingFairShare(true);
+    setFairShareError(null);
+
+    try {
+      const response = await apiClient.calculateFairShare(orderId);
+
+      if (response.success && response.data) {
+        setDistributionData(response.data.distribusi);
+        // Refresh order data to get updated status
+        const orderResponse = await apiClient.getOrderById(orderId);
+        if (orderResponse.success && orderResponse.data) {
+          setOrder(orderResponse.data);
+        }
+      } else {
+        setFairShareError(response.error || 'Gagal menghitung distribusi fair-share');
+      }
+    } catch (err) {
+      setFairShareError('Terjadi kesalahan koneksi saat menghitung distribusi');
+    } finally {
+      setIsCalculatingFairShare(false);
     }
   };
 
@@ -214,10 +249,32 @@ export default function KopdesOrderDetailPage() {
           </div>
         </div>
 
-        <div className="p-8 text-center text-gray-500">
-          <p>Daftar petani penyuplai akan muncul setelah fair-share distribution dihitung.</p>
-          <p className="text-sm mt-1">Fitur ini akan tersedia di fase berikutnya.</p>
-        </div>
+        {distributionData && distributionData.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {distributionData.map((item, index) => (
+              <div key={index} className="p-4 md:p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm ${getGradeColor(item.grade)}`}>
+                    {item.grade}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">{item.petani_nama || `Petani #${item.petani_id}`}</p>
+                    <p className="text-sm text-gray-500">{item.kontribusi_kg} kg • Grade {item.grade}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500 uppercase font-bold">Diterima</p>
+                  <p className="text-lg font-black text-primary-dark">Rp {item.jumlah_diterima.toLocaleString('id-ID')}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500">
+            <p>Daftar petani penyuplai akan muncul setelah fair-share distribution dihitung.</p>
+            <p className="text-sm mt-1">Fitur ini akan tersedia di fase berikutnya.</p>
+          </div>
+        )}
       </div>
 
       {/* Rincian Harga & Fee */}
@@ -311,7 +368,7 @@ export default function KopdesOrderDetailPage() {
           <Download className="w-4 h-4" />
           Download PDF
         </button>
-        {!order.harga_terkunci && (
+        {!order.harga_terkunci ? (
           <button
             type="submit"
             onClick={handleConfirmPrice}
@@ -330,6 +387,24 @@ export default function KopdesOrderDetailPage() {
               </>
             )}
           </button>
+        ) : order.status === 'siap_kirim' && (
+          <button
+            onClick={handleCalculateFairShare}
+            disabled={isCalculatingFairShare}
+            className="w-full md:w-auto bg-primary hover:bg-primary-dark disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-8 py-3 md:py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+          >
+            {isCalculatingFairShare ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Menghitung...
+              </>
+            ) : (
+              <>
+                <Banknote className="w-4 h-4" />
+                Hitung Fair-Share
+              </>
+            )}
+          </button>
         )}
       </div>
 
@@ -344,6 +419,13 @@ export default function KopdesOrderDetailPage() {
         <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 mt-4">
           <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
           <p className="text-red-600 text-sm font-medium">{(error as any).message || String(error)}</p>
+        </div>
+      )}
+
+      {fairShareError && (
+        <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex gap-3 mt-4">
+          <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-red-600 text-sm font-medium">{fairShareError}</p>
         </div>
       )}
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { apiClient } from "@/lib/api-client";
-import { authStorage, getDashboardPath } from "@/lib/auth";
+import { authStorage, getDashboardPath, isProfileIncomplete } from "@/lib/auth";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -67,14 +67,11 @@ export default function AuthCallbackPage() {
             });
 
             // Step 5: Check profile_completed flag and redirect accordingly
-            if (meResponse.data.profile_completed === false) {
-              // Profile not completed - redirect to profile completion page
-              // Note: Profile completion page may not exist yet, so redirect to dashboard for now
-              // This should be implemented in a separate task
-              const dashboardPath = getDashboardPath(meResponse.data.role);
-              router.push(dashboardPath);
+            if (isProfileIncomplete(meResponse.data)) {
+              // Profile not completed for OAuth user - redirect to profile completion page
+              router.push('/auth/complete-profile');
             } else {
-              // Profile completed or field not present - redirect to dashboard
+              // Profile completed or user is manual (auth_id null) - redirect to dashboard
               const dashboardPath = getDashboardPath(meResponse.data.role);
               router.push(dashboardPath);
             }

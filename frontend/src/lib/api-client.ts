@@ -42,6 +42,7 @@ interface MeResponse {
     email: string;
     role: string;
     desa_id: number | null;
+    auth_id?: string | null;
     profile_completed?: boolean;
     kopdes_id?: number | null;
   };
@@ -59,6 +60,7 @@ interface OAuthExchangeResponse {
       role: string;
       desa_id: number | null;
       email: string;
+      auth_id?: string | null;
       profile_completed?: boolean;
     };
   };
@@ -321,6 +323,26 @@ class ApiClient {
     }
   }
 
+  async completeProfile(nama: string): Promise<any> {
+    try {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/users/me/complete-profile`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nama }),
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Complete profile error:', error);
+      return {
+        success: false,
+        error: 'Gagal melengkapi profil',
+      };
+    }
+  }
+
   async getCapacity(desaId: number): Promise<any> {
     try {
       const response = await this.fetchWithAuth(`${this.baseUrl}/api/capacity/${desaId}`, {
@@ -510,7 +532,7 @@ class ApiClient {
 
   async getOrdersByPembeli(pembeliId: number): Promise<any> {
     try {
-      const response = await this.fetchWithAuth(`${this.baseUrl}/api/orders/${pembeliId}`, {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/orders/pembeli/${pembeliId}`, {
         method: 'GET',
       });
 
@@ -601,6 +623,19 @@ class ApiClient {
     } catch (error) {
       console.error('Get economic impact error:', error);
       return { success: false, error: 'Gagal mengambil data dampak ekonomi' };
+    }
+  }
+
+  async calculateFairShare(orderId: number): Promise<any> {
+    try {
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/fair-share/${orderId}/calculate`, {
+        method: 'POST',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Calculate fair share error:', error);
+      return { success: false, error: 'Gagal menghitung distribusi fair-share' };
     }
   }
 

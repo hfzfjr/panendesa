@@ -78,15 +78,17 @@ BEGIN
   CREATE TEMP TABLE temp_intake_candidates (
     intake_grading_id INTEGER,
     petani_id INTEGER,
+    petani_nama VARCHAR,
     grade VARCHAR(1),
     berat_aktual_kg DECIMAL(10,2),
     pengali_grade DECIMAL(3,2)
   ) ON COMMIT DROP;
 
-  INSERT INTO temp_intake_candidates (intake_grading_id, petani_id, grade, berat_aktual_kg, pengali_grade)
+  INSERT INTO temp_intake_candidates (intake_grading_id, petani_id, petani_nama, grade, berat_aktual_kg, pengali_grade)
   SELECT
     ig.id,
     se.petani_id,
+    u.nama AS petani_nama,
     ig.grade,
     ig.berat_aktual_kg,
     get_pengali_grade(ig.grade) AS pengali_grade
@@ -126,8 +128,8 @@ BEGIN
   v_total_uang_dibagi := v_harga_final_per_kg * (1 - v_fee_persen / 100) * v_total_kg_terkumpul;
 
   -- 8. Hitung distribusi per petani dan INSERT ke fair_share_distribution
-  FOR v_candidate IN 
-    SELECT intake_grading_id, petani_id, grade, berat_aktual_kg, pengali_grade
+  FOR v_candidate IN
+    SELECT intake_grading_id, petani_id, petani_nama, grade, berat_aktual_kg, pengali_grade
     FROM temp_intake_candidates
   LOOP
     DECLARE
@@ -142,13 +144,14 @@ BEGIN
       INSERT INTO fair_share_distribution (
         order_id, petani_id, intake_grading_id, kontribusi_kg, pengali_grade, jumlah_diterima
       ) VALUES (
-        p_order_id, v_candidate.petani_id, v_candidate.intake_grading_id, 
+        p_order_id, v_candidate.petani_id, v_candidate.intake_grading_id,
         v_candidate.berat_aktual_kg, v_candidate.pengali_grade, v_jumlah_diterima
       );
 
       -- Tambahkan ke JSON result
       v_distribusi := v_distribusi || json_build_object(
         'petani_id', v_candidate.petani_id,
+        'petani_nama', v_candidate.petani_nama,
         'kontribusi_kg', v_candidate.berat_aktual_kg,
         'grade', v_candidate.grade,
         'jumlah_diterima', v_jumlah_diterima

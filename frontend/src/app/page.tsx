@@ -26,7 +26,7 @@ export default function Home() {
           <div className="w-full max-w-7xl h-[85vh] min-h-137.5 bg-linear-to-br from-(--color-primary) to-(--color-primary-dark) rounded-[40px] overflow-hidden relative shadow-xl flex items-center">
             {/* Background Pattern/Glow */}
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay"></div>
-            
+
             {/* Animated Blobs */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-yellow-400/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
             <div className="absolute top-0 right-32 w-96 h-96 bg-green-400/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
@@ -56,9 +56,9 @@ export default function Home() {
               <div className="hidden lg:flex relative items-center justify-center h-full min-h-125">
                 {/* Main Image */}
                 <div className="relative w-80 h-105 rounded-4xl overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-transform duration-500 z-10 border-4 border-white/20">
-                  <img 
-                    src="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop" 
-                    alt="Sayuran Segar" 
+                  <img
+                    src="https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop"
+                    alt="Sayuran Segar"
                     className="object-cover w-full h-full"
                   />
                   <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent"></div>
@@ -113,9 +113,9 @@ export default function Home() {
                 { name: "Rempah", icon: "🧄", color: "bg-orange-100 text-orange-600" },
                 { name: "Grosir", icon: "📦", color: "bg-blue-100 text-blue-600", hiddenMobile: true },
               ].map((cat, idx) => (
-                <Link 
+                <Link
                   href={`/pembeli/marketplace?category=${encodeURIComponent(cat.name)}`}
-                  key={idx} 
+                  key={idx}
                   className={`flex flex-col items-center gap-3 cursor-pointer group ${cat.hiddenMobile ? 'hidden md:flex' : 'flex'}`}
                 >
                   <div className={`w-14 h-14 lg:w-16 lg:h-16 rounded-[20px] ${cat.color} flex items-center justify-center text-2xl lg:text-3xl shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-300 transform group-hover:-translate-y-1`}>
@@ -153,7 +153,7 @@ export default function Home() {
               {[
                 { id: "1", name: "Cabai Merah Keriting Premium", price: "Rp 35.000", unit: "kg", village: "Desa Cibodas", rating: 4.8, sold: "1.2rb", grade: "Grade A", img: "https://images.unsplash.com/photo-1596199050105-6d5d32222916?q=80&w=600&auto=format&fit=crop" },
                 { id: "2", name: "Tomat Merah Segar", price: "Rp 12.000", unit: "kg", village: "Desa Sukamaju", rating: 4.9, sold: "850", grade: "Grade A", img: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?q=80&w=600&auto=format&fit=crop" },
-                { id: "3", name: "Bawang Merah Besar", price: "Rp 28.000", unit: "kg", village: "Desa Brebes", rating: 4.7, sold: "2.1rb", grade: "Grade B", img: "https://images.unsplash.com/photo-1618512496248-a07ce83aa8cb?q=80&w=600&auto=format&fit=crop" },
+                { id: "3", name: "Bawang Merah Besar", price: "Rp 28.000", unit: "kg", village: "Desa Brebes", rating: 4.7, sold: "2.1rb", grade: "Grade B", img: "https://images.unsplash.com/photo-1618512496248-a07fe83aa8cb?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" },
                 { id: "4", name: "Kentang Dieng Super", price: "Rp 18.000", unit: "kg", village: "Desa Dieng Kulon", rating: 5.0, sold: "3.4rb", grade: "Grade A", img: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?q=80&w=600&auto=format&fit=crop" },
               ].map((item, idx) => {
                 const getGradeColor = (grade: string) => {
@@ -161,44 +161,44 @@ export default function Home() {
                   if (grade.includes("B")) return "bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-slate-500/30";
                   return "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-green-500/30";
                 };
-                
+
                 return (
                   <Link href={`/pembeli/marketplace/${item.id}`} key={idx} className="group flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 overflow-hidden relative h-full">
-                    
+
                     {/* Image Section */}
                     <div className="w-full aspect-square overflow-hidden bg-gray-50 relative">
                       <img src={item.img} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out" />
-                      
+
                       {/* Overlay Gradient for Text */}
                       <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      
+
                       {/* Premium Grade Badge */}
                       <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full flex items-center gap-1 text-[10px] font-black uppercase tracking-wider shadow-md ${getGradeColor(item.grade)}`}>
                         <ShieldCheck className="w-3 h-3" />
                         {item.grade}
                       </div>
                     </div>
-                    
+
                     {/* Content Section */}
                     <div className="p-4 flex flex-col flex-1 relative bg-white">
                       <h3 className="font-extrabold text-gray-900 text-sm md:text-base line-clamp-2 mb-1.5 group-hover:text-(--color-primary-dark) transition-colors leading-snug">
                         {item.name}
                       </h3>
-                      
+
                       <div className="text-lg md:text-xl font-black text-gray-900 mb-3 tracking-tight">
                         {item.price}
                         <span className="text-xs font-medium text-gray-400 ml-0.5">/{item.unit}</span>
                       </div>
-                      
+
                       <div className="mt-auto pt-3 border-t border-gray-100">
                         <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2.5 font-medium">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin w-3.5 h-3.5 text-red-400 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin w-3.5 h-3.5 text-red-400 shrink-0"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
                           <span className="truncate">{item.village}</span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1 text-xs">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star w-3.5 h-3.5 fill-amber-400 text-amber-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star w-3.5 h-3.5 fill-amber-400 text-amber-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
                             <span className="font-bold text-gray-700">{item.rating}</span>
                           </div>
                           <div className="text-[11px] font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
@@ -211,7 +211,7 @@ export default function Home() {
                 );
               })}
             </div>
-            
+
             <div className="mt-8 md:hidden flex justify-center">
               <Link href="/pembeli">
                 <Button variant="outline" className="w-full border-(--color-primary-dark) text-(--color-primary-dark)">
@@ -261,7 +261,7 @@ export default function Home() {
                 Kenapa Memilih PanenDesa?
               </h2>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               {/* Card 1 */}
               <div className="bg-white rounded-4xl p-8 shadow-sm hover:shadow-2xl border border-gray-100 transform hover:-translate-y-2 transition-all duration-300 group">
@@ -408,7 +408,7 @@ export default function Home() {
 
               <div className="relative">
                 <div className="aspect-square lg:aspect-auto lg:h-125 w-full rounded-4xl overflow-hidden shadow-2xl">
-                  <img src="https://images.unsplash.com/photo-1595855761081-37d45cb04791?q=80&w=800&auto=format&fit=crop" alt="Petani" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1710563159928-83611beece71?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Petani" className="w-full h-full object-cover" />
                 </div>
 
                 {/* Floating Card */}
@@ -435,9 +435,9 @@ export default function Home() {
               <div>
                 <span className="text-primary-dark font-extrabold text-sm tracking-widest uppercase mb-3 block">Dampak Nyata</span>
                 <h2 className="text-4xl lg:text-5xl font-extrabold text-neutral-900 mb-8 leading-tight tracking-tight">
-                  Tumbuh Bersama <br/>Ribuan Petani
+                  Tumbuh Bersama <br />Ribuan Petani
                 </h2>
-                
+
                 <div className="grid grid-cols-2 gap-8 mb-12">
                   <div>
                     <h4 className="text-5xl font-extrabold text-primary-dark mb-2">150+</h4>
@@ -462,7 +462,7 @@ export default function Home() {
                 {/* Testimonial 1 */}
                 <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 transform hover:-translate-x-4 transition-transform duration-300">
                   <div className="flex text-yellow-400 mb-4">
-                    {[...Array(5)].map((_, i) => <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>)}
+                    {[...Array(5)].map((_, i) => <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>)}
                   </div>
                   <p className="text-lg text-neutral-800 font-medium mb-6 italic">
                     &quot;Lebih tenang menjual lewat Kopdes. Harganya pasti, fee-nya jelas, dan yang paling penting saya dihargai sesuai kualitas panen saya.&quot;
@@ -481,7 +481,7 @@ export default function Home() {
                 {/* Testimonial 2 */}
                 <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 transform translate-x-8 hover:translate-x-4 transition-transform duration-300">
                   <div className="flex text-yellow-400 mb-4">
-                    {[...Array(5)].map((_, i) => <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>)}
+                    {[...Array(5)].map((_, i) => <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>)}
                   </div>
                   <p className="text-lg text-neutral-800 font-medium mb-6 italic">
                     &quot;Sistem Smart Split sangat luar biasa. Saat stok desa sebelah kosong, pesanan otomatis dialihkan ke desa kami.&quot;
@@ -507,15 +507,15 @@ export default function Home() {
             {/* Decorative background circles */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full transform translate-x-1/3 -translate-y-1/3 blur-3xl"></div>
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-400/10 rounded-full transform -translate-x-1/3 translate-y-1/3 blur-3xl"></div>
-            
+
             <div className="relative z-10 max-w-3xl mx-auto">
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6 leading-tight">
-                Saatnya Membangun <br/><span className="text-yellow-400">Kedaulatan Pangan</span>
+                Saatnya Membangun <br /><span className="text-yellow-400">Kedaulatan Pangan</span>
               </h2>
               <p className="text-lg text-white/80 mb-12 font-medium max-w-2xl mx-auto">
                 Bergabunglah dengan ekosistem rantai pasok paling adil di Indonesia. Mulai jual hasil panen Anda atau beli komoditas segar langsung dari sumbernya.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
                 <Link href="/auth/register" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full h-14 bg-yellow-400 hover:bg-yellow-500 text-neutral-900 font-extrabold rounded-full px-10 text-lg shadow-[0_0_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105">

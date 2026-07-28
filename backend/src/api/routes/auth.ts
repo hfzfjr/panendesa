@@ -51,7 +51,7 @@ router.post('/oauth-exchange', authRateLimit, async (req: Request, res: Response
     // Query custom users table by auth_id
     const { data: customUser, error: userError } = await supabase
       .from('users')
-      .select('id, nama, role, desa_id, email, profile_completed, skor_konsistensi')
+      .select('id, nama, role, desa_id, auth_id, email, profile_completed, skor_konsistensi')
       .eq('auth_id', auth_id)
       .single();
 
@@ -95,6 +95,7 @@ router.post('/oauth-exchange', authRateLimit, async (req: Request, res: Response
           role: customUser.role,
           desa_id: customUser.desa_id,
           email: customUser.email,
+          auth_id: customUser.auth_id,
           profile_completed: customUser.profile_completed
         }
       }

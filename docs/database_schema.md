@@ -19,7 +19,9 @@ CREATE TABLE users (
     role VARCHAR(20) NOT NULL CHECK (role IN ('petani','petugas_kopdes','pembeli','admin')),
     desa_id INTEGER,
     email VARCHAR(100) UNIQUE,
-    password_hash TEXT NOT NULL,
+    password_hash TEXT,
+    auth_id UUID UNIQUE,
+    profile_completed BOOLEAN DEFAULT false,
     -- Skor konsistensi individual, hanya relevan untuk role 'petani'.
     -- Dihitung dari histori stok_estimasi.jumlah_kg vs intake_grading.berat_aktual_kg.
     skor_konsistensi DECIMAL(5,2) DEFAULT 100.00,

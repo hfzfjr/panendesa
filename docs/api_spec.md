@@ -8,12 +8,18 @@ Semua response sukses berbentuk `{ "success": true, "data": {...} }`. Semua resp
 Request: `{ "email": string, "password": string }`
 Response sukses: `{ "success": true, "data": { "token": string, "role": string, "user_id": number } }`
 
+### POST /api/auth/oauth-exchange
+Request: `{ "access_token": string }` (Supabase OAuth access token)
+Proses: menukar Supabase OAuth access token dengan custom JWT token untuk user yang register via OAuth. Endpoint ini mengambil auth_id dari Supabase user, mencari user di tabel users berdasarkan auth_id, lalu mengembalikan custom JWT dan refresh token.
+Response sukses: `{ "success": true, "data": { "access_token": string, "refresh_token": string, "user": { "id": number, "nama": string, "role": string, "desa_id": number | null, "email": string, "auth_id": string, "profile_completed": boolean } } }`
+Catatan: `auth_id` selalu terisi untuk user OAuth (UUID dari Supabase). Field ini digunakan di frontend untuk membedakan user OAuth vs user manual dalam logic profile completion.
+
 ## Users
 
 ### GET /api/users/me
 Role: semua role terautentikasi
-Response: `{ "success": true, "data": { "id": number, "nama": string, "email": string, "role": string, "desa_id": number | null, "profile_completed": boolean, "skor_konsistensi": number, "kopdes_id": number | null } }`
-Catatan: `kopdes_id` hanya disertakan untuk role `petugas_kopdes` (di-resolve dari `desa_id` via tabel `kopdes`). Untuk role lain atau jika kopdes tidak ditemukan untuk desa tersebut, field ini bernilai `null`.
+Response: `{ "success": true, "data": { "id": number, "nama": string, "email": string, "role": string, "desa_id": number | null, "auth_id": string | null, "profile_completed": boolean, "skor_konsistensi": number, "kopdes_id": number | null } }`
+Catatan: `kopdes_id` hanya disertakan untuk role `petugas_kopdes` (di-resolve dari `desa_id` via tabel `kopdes`). Untuk role lain atau jika kopdes tidak ditemukan untuk desa tersebut, field ini bernilai `null`. `auth_id` bernilai UUID untuk user OAuth, dan `null` untuk user manual (login dengan password).
 
 ### PATCH /api/users/me/complete-profile
 Role: semua role terautentikasi
@@ -82,9 +88,10 @@ Request: `{ "komoditas_id": number, "jumlah_diminta_kg": number, "desa_id_priori
 Proses: sistem cek kapasitas estimasi -> jika cukup, buat order status `dikonfirmasi_sementara`.
 Response: `{ "success": true, "data": { "order_id": number, "status": string } }`
 
-### GET /api/orders/:pembeli_id
+### GET /api/orders/pembeli/:pembeli_id
 Role: `pembeli` (milik sendiri), `admin`
 Response: daftar order milik pembeli tsb beserta status terkini.
+Catatan: path diubah dari /:pembeli_id menjadi /pembeli/:pembeli_id untuk menghindari route collision dengan GET /api/orders/:id (keduanya sebelumnya punya shape path yang identik).
 
 ### GET /api/orders/kopdes/:kopdes_id
 Role: `petugas_kopdes` (hanya kopdes miliknya sendiri — cek desa_id kopdes terhadap req.user.desa_id), `admin`
@@ -113,13 +120,14 @@ Response: `{ "success": true, "data": { "harga_terkunci": true, "fee_kopdes_pers
 ## Fair-Share Distribution
 
 ### POST /api/fair-share/:order_id/calculate
-Role: `petugas_kopdes`, sistem
+Role: `petugas_kopdes`
 Proses: hitung distribusi berdasarkan kontribusi kg x pengali grade dari semua `intake_grading` terkait order tsb, **setelah** `fee_kopdes_persen_terpakai` dipotong dari `harga_final_per_kg`. Dibungkus dalam satu transaksi database — jika ada error di tengah proses, seluruh perubahan di-rollback (tidak boleh partial write).
-Response: `{ "success": true, "data": { "distribusi": [ { "petani_id": number, "kontribusi_kg": number, "grade": string, "jumlah_diterima": number } ], "fee_kopdes_persen_terpakai": number, "total_fee_kopdes": number } }`
+Response: `{ "success": true, "data": { "distribusi": [ { "petani_id": number, "petani_nama": string, "kontribusi_kg": number, "grade": string, "jumlah_diterima": number } ], "fee_kopdes_persen_terpakai": number, "total_fee_kopdes": number } }`
 
 ### GET /api/fair-share/petani/:petani_id
 Role: `petani`
 Response: riwayat rincian hasil bagi-hasil milik petani tsb (transparan, bisa dilihat kapan saja, termasuk fee yang sudah dipotong secara eksplisit — bukan angka bersih tanpa penjelasan).
+Response format: `{ "success": true, "data": [ { "id": number, "order_id": number, "intake_grading_id": number, "kontribusi_kg": number, "grade": string, "pengali_grade": number, "jumlah_diterima": number, "fee_kopdes_persen": number, "fee_kopdes_nominal": number, "harga_final_per_kg": number, "komoditas_nama": string, "created_at": string } ] }`
 
 ## Economic Impact Calculator (Tier 2 — Pelengkap)
 

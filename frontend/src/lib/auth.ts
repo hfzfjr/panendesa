@@ -5,6 +5,8 @@ export interface AuthUser {
   nama?: string;
   email?: string;
   kopdes_id?: number | null;
+  auth_id?: string | null;
+  profile_completed?: boolean;
 }
 
 export const authStorage = {
@@ -97,4 +99,12 @@ export const getDashboardPath = (role: string): string => {
   };
 
   return rolePaths[role] || '/';
+};
+
+export const isProfileIncomplete = (user: AuthUser | any): boolean => {
+  // User needs profile completion ONLY if:
+  // 1. profile_completed is false AND
+  // 2. auth_id is not null (user is OAuth user)
+  // Manual users (auth_id === null) should never be redirected to profile completion
+  return user.profile_completed === false && user.auth_id !== null;
 };

@@ -74,7 +74,7 @@ router.get('/me', verifyToken, async (req: Request, res: Response) => {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, nama, email, role, desa_id, profile_completed, skor_konsistensi')
+      .select('id, nama, email, role, desa_id, auth_id, profile_completed, skor_konsistensi')
       .eq('id', user_id)
       .single();
 

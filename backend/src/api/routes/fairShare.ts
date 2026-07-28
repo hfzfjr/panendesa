@@ -124,10 +124,11 @@ router.get('/petani/:petani_id', verifyToken, requireRole(['petani']), async (re
       });
     }
 
-    // Query fair_share_distribution dengan JOIN ke orders dan intake_grading
+    // Query fair_share_distribution dengan JOIN ke orders, komoditas, dan intake_grading
     const { data: distributionData, error: distributionError } = await supabase
       .from('fair_share_distribution')
       .select(`
+        id,
         order_id,
         intake_grading_id,
         kontribusi_kg,
@@ -136,7 +137,11 @@ router.get('/petani/:petani_id', verifyToken, requireRole(['petani']), async (re
         created_at,
         orders (
           harga_final_per_kg,
-          fee_kopdes_persen_terpakai
+          fee_kopdes_persen_terpakai,
+          komoditas_id,
+          komoditas (
+            nama_komoditas
+          )
         ),
         intake_grading (
           grade
@@ -154,17 +159,34 @@ router.get('/petani/:petani_id', verifyToken, requireRole(['petani']), async (re
     }
 
     // Transform data ke format response yang diinginkan
-    const transformedData = distributionData.map((item: any) => ({
-      order_id: item.order_id,
-      intake_grading_id: item.intake_grading_id,
-      kontribusi_kg: item.kontribusi_kg,
-      grade: item.intake_grading?.grade,
-      pengali_grade: item.pengali_grade,
-      jumlah_diterima: item.jumlah_diterima,
-      fee_kopdes_persen_terpakai: item.orders?.fee_kopdes_persen_terpakai,
-      harga_final_per_kg: item.orders?.harga_final_per_kg,
-      created_at: item.created_at
-    }));
+    const transformedData = distributionData.map((item: any) => {
+      const fee_persen = item.orders?.fee_kopdes_persen_terpakai || 0;
+      const jumlah_diterima = item.jumlah_diterima;
+
+      // Hitung fee_kopdes_nominal dengan formula yang benar
+      // nilai_kotor_petani = jumlah_diterima / (1 - fee_persen / 100)
+      // fee_kopdes_nominal = nilai_kotor_petani - jumlah_diterima
+      let fee_kopdes_nominal = 0;
+      if (fee_persen < 100) {
+        const nilai_kotor_petani = jumlah_diterima / (1 - fee_persen / 100);
+        fee_kopdes_nominal = nilai_kotor_petani - jumlah_diterima;
+      }
+
+      return {
+        id: item.id,
+        order_id: item.order_id,
+        intake_grading_id: item.intake_grading_id,
+        kontribusi_kg: item.kontribusi_kg,
+        grade: item.intake_grading?.grade,
+        pengali_grade: item.pengali_grade,
+        jumlah_diterima: item.jumlah_diterima,
+        fee_kopdes_persen: fee_persen,
+        fee_kopdes_nominal: fee_kopdes_nominal,
+        harga_final_per_kg: item.orders?.harga_final_per_kg,
+        komoditas_nama: item.orders?.komoditas?.nama_komoditas,
+        created_at: item.created_at
+      };
+    });
 
     return res.json({
       success: true,
