@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
 
 export default function Navbar() {
@@ -22,8 +23,15 @@ export default function Navbar() {
                     </button>
 
                     {/* Logo */}
-                    <Link href="/" className="text-[#324F37] font-extrabold text-2xl tracking-tight">
-                        PanenDesa
+                    <Link href="/" className="relative h-10 w-auto">
+                        <Image
+                            src="/logo/logo-tulisan.svg"
+                            alt="PanenDesa"
+                            width={200}
+                            height={40}
+                            className="h-10 w-auto"
+                            priority
+                        />
                     </Link>
                 </div>
 
@@ -67,7 +75,16 @@ export default function Navbar() {
                     {/* Drawer */}
                     <div className="relative w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col">
                         <div className="flex items-center justify-between p-5 border-b border-gray-100">
-                            <span className="text-[#324F37] font-extrabold text-2xl tracking-tight">PanenDesa</span>
+                            <div className="relative h-10 w-auto">
+                                <Image
+                                    src="/logo/logo-tulisan.svg"
+                                    alt="PanenDesa"
+                                    width={200}
+                                    height={40}
+                                    className="h-10 w-auto"
+                                    priority
+                                />
+                            </div>
                             <button
                                 onClick={() => setIsMenuOpen(false)}
                                 className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 transition-colors"

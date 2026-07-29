@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Bell, ShoppingCart, User, Search, Menu, X } from "lucide-react";
 
@@ -20,9 +21,15 @@ export function PembeliNavbar() {
 
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Link href="/pembeli" className="text-primary-dark font-extrabold text-xl md:text-2xl tracking-tight flex items-center gap-2">
-              <span className="w-8 h-8 md:w-9 md:h-9 bg-primary text-white rounded-lg flex items-center justify-center text-lg shadow-sm">P</span>
-              PanenDesa
+            <Link href="/pembeli" className="relative h-10 w-auto">
+              <Image
+                src="/logo/logo-tulisan.svg"
+                alt="PanenDesa"
+                width={200}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
           </div>
 
@@ -91,9 +98,15 @@ export function PembeliNavbar() {
           {/* Drawer */}
           <div className="relative w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <span className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center text-lg shadow-sm">P</span>
-                <span className="text-primary-dark font-extrabold text-xl tracking-tight">PanenDesa</span>
+              <div className="relative h-10 w-auto">
+                <Image
+                  src="/logo/logo-tulisan.svg"
+                  alt="PanenDesa"
+                  width={200}
+                  height={40}
+                  className="h-10 w-auto"
+                  priority
+                />
               </div>
               <button
                 onClick={() => setIsMenuOpen(false)}
@@ -108,8 +121,8 @@ export function PembeliNavbar() {
                 href="/pembeli"
                 onClick={() => setIsMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${isDashboard
-                    ? "bg-primary-dark text-white shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-primary-dark text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 Beranda
@@ -118,8 +131,8 @@ export function PembeliNavbar() {
                 href="/pembeli/marketplace"
                 onClick={() => setIsMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${isMarketplace
-                    ? "bg-primary-dark text-white shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-primary-dark text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 Marketplace
@@ -128,8 +141,8 @@ export function PembeliNavbar() {
                 href="/pembeli/pesanan"
                 onClick={() => setIsMenuOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${isPesanan
-                    ? "bg-primary-dark text-white shadow-sm"
-                    : "text-gray-700 hover:bg-gray-50"
+                  ? "bg-primary-dark text-white shadow-sm"
+                  : "text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 Pesanan Saya

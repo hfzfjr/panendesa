@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Bell, Menu, X, LayoutDashboard, Inbox, Package, ShoppingCart, Users, Truck, FileText, Settings, HelpCircle } from "lucide-react";
 
@@ -31,8 +32,15 @@ export function KopdesNavbar() {
             <Menu className="w-6 h-6" />
           </button>
 
-          <Link href="/kopdes" className="text-primary-dark font-bold text-xl md:text-2xl tracking-tight">
-            PanenDesa
+          <Link href="/kopdes" className="relative h-10 w-auto">
+            <Image
+              src="/logo/logo-tulisan.svg"
+              alt="PanenDesa"
+              width={200}
+              height={40}
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
         </div>
 
@@ -63,7 +71,16 @@ export function KopdesNavbar() {
           {/* Menu Panel */}
           <div className="relative w-72 max-w-full bg-[#F9FAFB] h-full flex flex-col shadow-2xl animate-in slide-in-from-left">
             <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 shrink-0">
-              <span className="text-primary-dark font-bold text-xl tracking-tight">PanenDesa</span>
+              <div className="relative h-10 w-auto">
+                <Image
+                  src="/logo/logo-tulisan.svg"
+                  alt="PanenDesa"
+                  width={200}
+                  height={40}
+                  className="h-10 w-auto"
+                  priority
+                />
+              </div>
               <button
                 onClick={() => setIsMenuOpen(false)}
                 className="text-gray-500 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"
@@ -84,8 +101,8 @@ export function KopdesNavbar() {
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${isActive
-                        ? 'bg-primary-dark text-white font-bold shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 font-medium'
+                      ? 'bg-primary-dark text-white font-bold shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 font-medium'
                       }`}
                   >
                     <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-gray-500'}`} />

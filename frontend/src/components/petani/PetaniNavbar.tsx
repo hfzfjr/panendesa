@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Bell, Menu, X, LayoutDashboard, Sprout, ClipboardCheck, ShoppingCart, Truck, Award, Headphones, Settings, HelpCircle } from "lucide-react";
 
@@ -24,15 +25,22 @@ export function PetaniNavbar() {
       <header className="w-full h-16 bg-[#F9FAFB] border-b border-gray-200 fixed top-0 left-0 right-0 z-50 px-4 md:px-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {/* Mobile Hamburger Button */}
-          <button 
+          <button
             className="lg:hidden text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"
             onClick={() => setIsMenuOpen(true)}
           >
             <Menu className="w-6 h-6" />
           </button>
-          
-          <Link href="/petani" className="text-primary-dark font-bold text-xl md:text-2xl tracking-tight">
-            PanenDesa
+
+          <Link href="/petani" className="relative h-10 w-auto">
+            <Image
+              src="/logo/logo-tulisan.svg"
+              alt="PanenDesa"
+              width={200}
+              height={40}
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
         </div>
 
@@ -53,21 +61,27 @@ export function PetaniNavbar() {
 
       {/* Mobile Slide-out Menu Overlay */}
       {isMenuOpen && (
-        <div className="fixed inset-0 z-[60] lg:hidden flex">
+        <div className="fixed inset-0 z-60 lg:hidden flex">
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             onClick={() => setIsMenuOpen(false)}
           ></div>
-          
+
           {/* Drawer */}
           <div className="relative w-4/5 max-w-sm bg-white h-full shadow-2xl flex flex-col animate-slide-right">
             <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <div>
-                <h2 className="text-primary-dark font-bold text-lg">PanenDesa</h2>
-                <p className="text-gray-500 text-xs">Agri-Ecosystem Hub</p>
+              <div className="relative h-10 w-auto">
+                <Image
+                  src="/logo/logo-tulisan.svg"
+                  alt="PanenDesa"
+                  width={200}
+                  height={40}
+                  className="h-10 w-auto"
+                  priority
+                />
               </div>
-              <button 
+              <button
                 onClick={() => setIsMenuOpen(false)}
                 className="w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-500 rounded-full hover:bg-gray-200 transition-colors"
               >
@@ -84,11 +98,10 @@ export function PetaniNavbar() {
                     key={link.name}
                     href={link.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${
-                      isActive
-                        ? "bg-primary-dark text-white shadow-sm"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${isActive
+                      ? "bg-primary-dark text-white shadow-sm"
+                      : "text-gray-700 hover:bg-gray-50"
+                      }`}
                   >
                     <link.icon className="w-5 h-5" />
                     <span>{link.name}</span>
