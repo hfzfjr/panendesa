@@ -9,32 +9,81 @@ import { MarketplaceResults } from "../../../../components/pembeli/MarketplaceRe
 import { ErrorState } from "../../../../components/ui/ErrorState";
 import { apiClient } from "../../../../lib/api-client";
 
+interface Komoditas {
+  id: number;
+  nama_komoditas: string;
+  satuan: string;
+  kategori: string | null;
+}
+
+interface HargaAcuan {
+  komoditas_id: number;
+  harga: number;
+}
+
 function MarketplaceContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [desaData, setDesaData] = useState<any[]>([]);
-  
+  const [komoditasList, setKomoditasList] = useState<Komoditas[]>([]);
+  const [hargaAcuanList, setHargaAcuanList] = useState<HargaAcuan[]>([]);
+  const [categories, setCategories] = useState<string[]>(["Semua"]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
+
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || searchParams.get("category") || "Semua Komoditas";
 
   useEffect(() => {
-    const fetchDesaData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await apiClient.getDesa();
-        if (response.success && response.data) {
-          setDesaData(response.data);
-        } else {
-          setError(response.error || 'Gagal mengambil data desa');
+        const [desaRes, komoditasRes, hargaAcuanRes] = await Promise.all([
+          apiClient.getDesa(),
+          apiClient.getKomoditas(),
+          apiClient.getHargaAcuan(),
+        ]);
+
+        if (desaRes.success && desaRes.data) {
+          setDesaData(desaRes.data);
+        }
+
+        if (komoditasRes.success && komoditasRes.data) {
+          setKomoditasList(komoditasRes.data);
+
+          // Extract unique categories
+          const uniqueCategories = Array.from(
+            new Set(komoditasRes.data.map((k: Komoditas) => k.kategori).filter(Boolean))
+          ) as string[];
+          setCategories(["Semua", ...uniqueCategories]);
+        }
+
+        if (hargaAcuanRes.success && hargaAcuanRes.data) {
+          setHargaAcuanList(hargaAcuanRes.data);
         }
       } catch (err) {
-        setError('Terjadi kesalahan saat mengambil data desa');
+        setError('Terjadi kesalahan saat mengambil data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDesaData();
+    fetchData();
   }, []);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    // Filter komoditas based on category
+    if (category === "Semua") {
+      // Fetch all komoditas again
+      apiClient.getKomoditas().then((res) => {
+        if (res.success) setKomoditasList(res.data);
+      });
+    } else {
+      // Fetch komoditas by category
+      apiClient.getKomoditas(category).then((res) => {
+        if (res.success) setKomoditasList(res.data);
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -84,14 +133,18 @@ function MarketplaceContent() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
             Menampilkan hasil untuk: <span className="text-primary-dark">"{query}"</span>
           </h1>
-          <p className="text-gray-500 mt-1">Ditemukan ratusan komoditas segar langsung dari petani.</p>
+          <p className="text-gray-500 mt-1">Ditemukan {komoditasList.length} komoditas segar langsung dari petani.</p>
         </div>
 
         {/* Content: Filters and Results */}
         <div className="w-full">
           {/* Components */}
-          <MarketplaceFilter desaData={desaData} />
-          
+          <MarketplaceFilter
+            desaData={desaData}
+            categories={categories}
+            onCategoryChange={handleCategoryChange}
+          />
+
           {/* Disclaimer Box */}
           <div className="w-full bg-white rounded-xl p-4 flex gap-3 text-sm text-gray-600 border border-gray-100 shadow-sm mb-6 items-start">
             <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
@@ -100,7 +153,12 @@ function MarketplaceContent() {
             </p>
           </div>
 
-          <MarketplaceResults desaData={desaData} />
+          <MarketplaceResults
+            komoditasList={komoditasList}
+            desaData={desaData}
+            hargaAcuanList={hargaAcuanList}
+            loading={loading}
+          />
         </div>
 
       </div>

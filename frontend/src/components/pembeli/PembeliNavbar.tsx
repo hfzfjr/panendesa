@@ -1,13 +1,28 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Bell, ShoppingCart, User, Search } from "lucide-react";
+import { authStorage } from "@/lib/auth";
 
 export function PembeliNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<{ nama?: string; role?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const currentUser = authStorage.getUser();
+    setUser(currentUser);
+    setLoading(false);
+  }, []);
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   const isMarketplace = pathname.includes("/marketplace");
   const isDashboard = !isMarketplace && pathname.includes("/pembeli") && pathname.split("/").length <= 3;
@@ -63,12 +78,23 @@ export function PembeliNavbar() {
 
           {/* User Profile */}
           <div className="hidden md:flex items-center gap-2 pl-2 border-l border-gray-200">
-            <div className="text-right">
-              <p className="text-sm font-bold text-gray-900 leading-tight">Gilang</p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Pembeli</p>
-            </div>
-            <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
-              <User className="w-5 h-5 text-gray-500" />
+            {loading ? (
+              <div className="text-right">
+                <div className="h-4 bg-gray-200 rounded w-16 mb-1"></div>
+                <div className="h-3 bg-gray-200 rounded w-12"></div>
+              </div>
+            ) : (
+              <div className="text-right">
+                <p className="text-sm font-bold text-gray-900 leading-tight">{user?.nama || 'Pengguna'}</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{user?.role || 'Pembeli'}</p>
+              </div>
+            )}
+            <div className="w-9 h-9 bg-primary-dark/10 rounded-full flex items-center justify-center border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
+              {loading ? (
+                <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+              ) : (
+                <span className="text-sm font-bold text-primary-dark">{getInitials(user?.nama)}</span>
+              )}
             </div>
           </div>
 

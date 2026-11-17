@@ -1,14 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Bell, Menu, X, LayoutDashboard, Sprout, ClipboardCheck, ShoppingCart, Truck, Award, Headphones, Settings, HelpCircle } from "lucide-react";
+import { authStorage } from "@/lib/auth";
 
 export function PetaniNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const [user, setUser] = useState<{ nama?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const currentUser = authStorage.getUser();
+    setUser(currentUser);
+    setLoading(false);
+  }, []);
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   const menuLinks = [
     { name: "Halaman Utama", href: "/petani", icon: LayoutDashboard },
@@ -49,12 +63,12 @@ export function PetaniNavbar() {
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-neutral-50 rounded-full"></span>
           </Link>
-          <Link href="/petani/profil" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer">
-            <img
-              src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?q=80&w=100&auto=format&fit=crop"
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
+          <Link href="/petani/profil" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer bg-primary-dark/10 flex items-center justify-center">
+            {loading ? (
+              <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+            ) : (
+              <span className="text-xs font-bold text-primary-dark">{getInitials(user?.nama)}</span>
+            )}
           </Link>
         </div>
       </header>
@@ -112,13 +126,15 @@ export function PetaniNavbar() {
 
             <div className="p-4 border-t border-gray-100">
               <div className="flex items-center gap-3 mb-4 px-2">
-                <img
-                  src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?q=80&w=100&auto=format&fit=crop"
-                  alt="Profile"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                <div className="w-10 h-10 rounded-full bg-primary-dark/10 flex items-center justify-center border-2 border-white shadow-sm ring-1 ring-gray-200">
+                  {loading ? (
+                    <div className="w-full h-full bg-gray-200 animate-pulse rounded-full"></div>
+                  ) : (
+                    <span className="text-xs font-bold text-primary-dark">{getInitials(user?.nama)}</span>
+                  )}
+                </div>
                 <div>
-                  <p className="font-bold text-gray-900 text-sm">Pak Budi</p>
+                  <p className="font-bold text-gray-900 text-sm">{user?.nama || 'Petani'}</p>
                   <p className="text-xs text-green-600 font-bold">Petani Teladan (Tier 1)</p>
                 </div>
               </div>

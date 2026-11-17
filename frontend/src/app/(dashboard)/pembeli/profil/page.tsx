@@ -34,6 +34,11 @@ export default function ProfilePage() {
     fetchUserData();
   }, []);
 
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   const menuItems = [
     { icon: User, label: "Informasi Pribadi", href: "#" },
     { icon: MapPin, label: "Alamat Pengiriman", href: "#" },
@@ -79,8 +84,12 @@ export default function ProfilePage() {
         {/* Background accent */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-dark/5 rounded-full -translate-y-1/2 translate-x-1/3"></div>
 
-        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gray-200 border-4 border-white shadow-md shrink-0 overflow-hidden relative z-10">
-          <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=150&auto=format&fit=crop" alt="Profile Avatar" className="w-full h-full object-cover" />
+        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-primary-dark/10 border-4 border-white shadow-md shrink-0 overflow-hidden relative z-10 flex items-center justify-center">
+          {userData?.avatar_url ? (
+            <img src={userData.avatar_url} alt="Profile Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-2xl md:text-3xl font-bold text-primary-dark">{getInitials(userData?.nama)}</span>
+          )}
         </div>
 
         <div className="relative z-10">

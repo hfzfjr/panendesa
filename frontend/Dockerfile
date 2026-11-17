@@ -51,19 +51,11 @@ WORKDIR /app
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 
-# Copy package files
-COPY package.json package-lock.json* ./
-
-# Install only production dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
-
 # Copy built application from builder stage
-# With standalone output, we only need .next/standalone, public/, and next.config.js
+# With standalone output, we only need .next/standalone, .next/static, and public/
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./
 
 # Set ownership to non-root user
 RUN chown -R nodejs:nodejs /app
@@ -74,12 +66,14 @@ USER nodejs
 # Expose port 3000
 EXPOSE 3000
 
-# Set environment to production
+# Set environment to production and bind to all interfaces for Coolify reverse proxy
 ENV NODE_ENV=production
+ENV HOSTNAME="0.0.0.0"
+ENV PORT=3000
 
-# Health check using Next.js default port
+# Health check using Next.js server port
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000), (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start Next.js production server
 CMD ["node", "server.js"]

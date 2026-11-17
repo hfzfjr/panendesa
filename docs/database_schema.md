@@ -56,7 +56,8 @@ ALTER TABLE users ADD CONSTRAINT fk_users_desa FOREIGN KEY (desa_id) REFERENCES 
 CREATE TABLE komoditas (
     id SERIAL PRIMARY KEY,
     nama_komoditas VARCHAR(50) NOT NULL,
-    satuan VARCHAR(10) DEFAULT 'kg'
+    satuan VARCHAR(10) DEFAULT 'kg',
+    kategori VARCHAR(50)
 );
 
 -- Laporan Stok Estimasi (sebelum panen)

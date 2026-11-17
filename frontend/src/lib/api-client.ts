@@ -556,9 +556,10 @@ class ApiClient {
     }
   }
 
-  async getDesa(): Promise<any> {
+  async getDesa(komoditasId?: number): Promise<any> {
     try {
-      const response = await this.fetchWithAuth(`${this.baseUrl}/api/desa`, {
+      const params = komoditasId ? `?komoditas_id=${komoditasId}` : '';
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/desa${params}`, {
         method: 'GET',
       });
 
@@ -566,6 +567,34 @@ class ApiClient {
     } catch (error) {
       console.error('Get desa error:', error);
       return { success: false, error: 'Gagal mengambil data desa' };
+    }
+  }
+
+  async getKomoditas(kategori?: string): Promise<any> {
+    try {
+      const params = kategori ? `?kategori=${encodeURIComponent(kategori)}` : '';
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/komoditas${params}`, {
+        method: 'GET',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get komoditas error:', error);
+      return { success: false, error: 'Gagal mengambil data komoditas' };
+    }
+  }
+
+  async getHargaAcuan(komoditasId?: number): Promise<any> {
+    try {
+      const params = komoditasId ? `?komoditas_id=${komoditasId}` : '';
+      const response = await this.fetchWithAuth(`${this.baseUrl}/api/harga-acuan${params}`, {
+        method: 'GET',
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error('Get harga acuan error:', error);
+      return { success: false, error: 'Gagal mengambil data harga acuan' };
     }
   }
 

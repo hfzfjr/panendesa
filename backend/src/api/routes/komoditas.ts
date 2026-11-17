@@ -6,15 +6,25 @@ const router = Router();
 
 /**
  * GET /api/komoditas
- * List all komoditas
+ * List all komoditas with optional category filter
  * Role: semua role terautentikasi
+ * Query param: ?kategori=string (optional)
  */
 router.get('/', verifyToken, async (req: Request, res: Response) => {
   try {
-    const { data, error } = await supabase
+    const { kategori } = req.query;
+
+    let query = supabase
       .from('komoditas')
-      .select('id, nama_komoditas, satuan')
+      .select('id, nama_komoditas, satuan, kategori')
       .order('nama_komoditas', { ascending: true });
+
+    // Apply category filter if provided
+    if (kategori && typeof kategori === 'string') {
+      query = query.eq('kategori', kategori);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('[Komoditas] Error fetching komoditas:', error);

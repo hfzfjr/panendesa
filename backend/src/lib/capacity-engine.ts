@@ -17,18 +17,26 @@ export interface CapacityData {
 /**
  * Hitung kapasitas agregat untuk satu desa
  * @param desa_id ID desa
+ * @param komoditas_id ID komoditas (opsional - jika diberikan, filter hanya komoditas tersebut)
  * @returns Data kapasitas (estimasi, tervalidasi, skor konsistensi)
  */
-export async function getDesaCapacity(desa_id: number): Promise<CapacityData> {
+export async function getDesaCapacity(desa_id: number, komoditas_id?: number): Promise<CapacityData> {
   try {
     // 1. Hitung Kapasitas Estimasi (dari stok_estimasi)
     // Hitung SEMUA stok_estimasi milik petani di desa tersebut (tanpa filter status)
     // Catatan: Kolom status saat ini hanya di-set ke 'menunggu_panen' saat create,
     // tidak ada logic yang mengubah status setelah itu (verifikasi dari codebase)
-    const { data: estimasiData, error: estimasiError } = await supabase
+    let estimasiQuery = supabase
       .from('stok_estimasi')
-      .select('jumlah_kg, petani_id, users!inner(desa_id)')
+      .select('jumlah_kg, petani_id, komoditas_id, users!inner(desa_id)')
       .eq('users.desa_id', desa_id);
+
+    // Filter by komoditas_id if provided
+    if (komoditas_id) {
+      estimasiQuery = estimasiQuery.eq('komoditas_id', komoditas_id);
+    }
+
+    const { data: estimasiData, error: estimasiError } = await estimasiQuery;
 
     if (estimasiError) throw estimasiError;
 
@@ -38,10 +46,17 @@ export async function getDesaCapacity(desa_id: number): Promise<CapacityData> {
     // 2. Hitung Kapasitas Tervalidasi (dari intake_grading)
     // Kapasitas tervalidasi adalah sumber kebenaran untuk alokasi order
     // Join dengan stok_estimasi untuk filter desa (via users)
-    const { data: intakeData, error: intakeError } = await supabase
+    let intakeQuery = supabase
       .from('intake_grading')
-      .select('berat_aktual_kg, stok_estimasi!inner(petani_id, users!inner(desa_id))')
+      .select('berat_aktual_kg, stok_estimasi!inner(petani_id, komoditas_id, users!inner(desa_id))')
       .eq('stok_estimasi.users.desa_id', desa_id);
+
+    // Filter by komoditas_id if provided
+    if (komoditas_id) {
+      intakeQuery = intakeQuery.eq('stok_estimasi.komoditas_id', komoditas_id);
+    }
+
+    const { data: intakeData, error: intakeError } = await intakeQuery;
 
     if (intakeError) throw intakeError;
 
@@ -70,9 +85,10 @@ export async function getDesaCapacity(desa_id: number): Promise<CapacityData> {
 
 /**
  * Hitung kapasitas agregat untuk semua desa (untuk admin/overview)
+ * @param komoditas_id ID komoditas (opsional - jika diberikan, filter hanya komoditas tersebut)
  * @returns Array data kapasitas per desa
  */
-export async function getAllDesaCapacity(): Promise<Array<{ desa_id: number; nama_desa: string } & CapacityData>> {
+export async function getAllDesaCapacity(komoditas_id?: number): Promise<Array<{ desa_id: number; nama_desa: string } & CapacityData>> {
   try {
     const { data: desaData, error: desaError } = await supabase
       .from('desa')
@@ -82,7 +98,7 @@ export async function getAllDesaCapacity(): Promise<Array<{ desa_id: number; nam
 
     const capacities = await Promise.all(
       (desaData || []).map(async (desa) => {
-        const capacity = await getDesaCapacity(desa.id);
+        const capacity = await getDesaCapacity(desa.id, komoditas_id);
         return {
           desa_id: desa.id,
           nama_desa: desa.nama_desa,

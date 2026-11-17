@@ -720,4 +720,188 @@ router.post('/:id/validate', verifyInternalService, async (req: Request, res: Re
   }
 });
 
+/**
+ * GET /api/orders/petani/:petani_id
+ * Mendapatkan daftar pesanan untuk petani (gabungan dari order_allocation dan fair_share_distribution)
+ * Role: petani (milik sendiri), admin
+ */
+router.get('/petani/:petani_id', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { petani_id } = req.params;
+
+    // Validasi: petani_id harus string
+    if (Array.isArray(petani_id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Parameter petani_id tidak valid'
+      });
+    }
+
+    const petaniIdNum = parseInt(petani_id);
+
+    if (isNaN(petaniIdNum)) {
+      return res.status(400).json({
+        success: false,
+        error: 'petani_id harus berupa angka'
+      });
+    }
+
+    const userRole = req.user!.role;
+    const userId = req.user!.user_id;
+
+    // RBAC: petani hanya boleh akses data miliknya sendiri
+    if (userRole === 'petani') {
+      if (petaniIdNum !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: 'Anda tidak memiliki akses ke data petani lain'
+        });
+      }
+    }
+
+    // Role lain selain admin dan petani ditolak
+    if (userRole !== 'petani' && userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Anda tidak memiliki akses ke endpoint ini'
+      });
+    }
+
+    // Admin boleh akses semua data, tidak perlu validasi tambahan
+
+    // 1. Ambil desa_id milik petani
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('desa_id')
+      .eq('id', petaniIdNum)
+      .single();
+
+    if (userError || !userData) {
+      console.error('[Orders] Error fetching user data:', userError);
+      return res.status(404).json({
+        success: false,
+        error: 'Data petani tidak ditemukan'
+      });
+    }
+
+    const desaId = userData.desa_id;
+
+    // 2. Query order_allocation untuk pesanan yang sedang berjalan
+    const { data: allocationData, error: allocationError } = await supabase
+      .from('order_allocation')
+      .select(`
+        id,
+        order_id,
+        jumlah_dialokasikan_kg,
+        urutan_prioritas,
+        skor_prioritas,
+        orders (
+          id,
+          pembeli_id,
+          komoditas_id,
+          status,
+          created_at,
+          komoditas (
+            nama_komoditas
+          ),
+          pembeli:users (
+            nama
+          )
+        )
+      `)
+      .eq('desa_id', desaId)
+      .order('created_at', { ascending: false });
+
+    if (allocationError) {
+      console.error('[Orders] Error fetching order allocation:', allocationError);
+    }
+
+    // 3. Query fair_share_distribution untuk pesanan yang sudah selesai
+    const { data: fairShareData, error: fairShareError } = await supabase
+      .from('fair_share_distribution')
+      .select(`
+        id,
+        order_id,
+        kontribusi_kg,
+        jumlah_diterima,
+        created_at,
+        orders (
+          id,
+          pembeli_id,
+          komoditas_id,
+          status,
+          created_at,
+          komoditas (
+            nama_komoditas
+          ),
+          pembeli:users (
+            nama
+          )
+        ),
+        intake_grading (
+          grade
+        )
+      `)
+      .eq('petani_id', petaniIdNum)
+      .order('created_at', { ascending: false });
+
+    if (fairShareError) {
+      console.error('[Orders] Error fetching fair share distribution:', fairShareError);
+    }
+
+    // 4. Transform dan gabungkan data
+    const result: any[] = [];
+
+    // Process order_allocation data (status: Berjalan)
+    if (allocationData) {
+      for (const item of allocationData) {
+        if (item.orders) {
+          result.push({
+            id: item.order_id,
+            pembeli_nama: item.orders.pembeli?.nama || 'Pembeli',
+            komoditas_nama: item.orders.komoditas?.nama_komoditas || 'Komoditas',
+            jumlah_kg: item.jumlah_dialokasikan_kg,
+            total_harga: null, // Belum ada harga final untuk order yang sedang berjalan
+            status: 'Berjalan',
+            tanggal: item.orders.created_at,
+            grade: null
+          });
+        }
+      }
+    }
+
+    // Process fair_share_distribution data (status: Selesai)
+    if (fairShareData) {
+      for (const item of fairShareData) {
+        if (item.orders) {
+          result.push({
+            id: item.order_id,
+            pembeli_nama: item.orders.pembeli?.nama || 'Pembeli',
+            komoditas_nama: item.orders.komoditas?.nama_komoditas || 'Komoditas',
+            jumlah_kg: item.kontribusi_kg,
+            total_harga: item.jumlah_diterima,
+            status: 'Selesai',
+            tanggal: item.orders.created_at,
+            grade: item.intake_grading?.grade || null
+          });
+        }
+      }
+    }
+
+    // Sort by tanggal (descending)
+    result.sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
+
+    return res.json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error('[Orders] Server error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Terjadi kesalahan server'
+    });
+  }
+});
+
 export default router;

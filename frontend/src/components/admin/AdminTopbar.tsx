@@ -3,6 +3,7 @@
 import React from "react";
 import { Bell, Menu } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface AdminTopbarProps {
   onMenuClick?: () => void;
@@ -20,8 +21,15 @@ export default function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
         >
           <Menu className="w-6 h-6" />
         </button>
-        <Link href="/admin" className="font-extrabold text-xl text-primary-dark tracking-tight">
-          PanenDesa
+        <Link href="/admin" className="relative h-9 w-auto">
+          <Image
+            src="/logo/logo-tulisan.svg"
+            alt="PanenDesa"
+            width={180}
+            height={36}
+            className="h-9 w-auto"
+            priority
+          />
         </Link>
       </div>
 

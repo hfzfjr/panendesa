@@ -10,6 +10,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "PanenDesa - Koordinasi Rantai Pasok Desa",
   description: "Sistem web yang mengoordinasikan seluruh proses rantai pasok hasil pertanian dan perkebunan di tingkat desa.",
+  icons: {
+    icon: "/logo/logo.svg",
+    shortcut: "/logo/logo.svg",
+    apple: "/logo/logo.svg",
+  },
 };
 
 export default function RootLayout({

@@ -27,6 +27,14 @@ Request: `{ "nama": string }`
 Proses: hanya mengizinkan update `nama` dan `profile_completed`. Field sensitif seperti `role` dan `desa_id` diabaikan (security).
 Response: `{ "success": true, "data": { "id": number, "nama": string, "email": string, "role": string, "desa_id": number | null, "profile_completed": boolean } }`
 
+## Komoditas
+
+### GET /api/komoditas
+Role: semua role terautentikasi
+Query param opsional: `?kategori=string`
+Response: `{ "success": true, "data": [ { "id": number, "nama_komoditas": string, "satuan": string, "kategori": string | null } ] }`
+Catatan: `kategori` berisi kategori produk untuk filter marketplace (Sayuran, Buah, Biji-bijian & Serealia, Umbi-umbian, Rempah, Kacang-kacangan, Kopi/Teh/Kakao). Nilai bisa `null` untuk data lama sebelum migration 06_add_kategori_to_komoditas.
+
 ## Stok Estimasi (Petani)
 
 ### POST /api/stok-estimasi
@@ -65,8 +73,9 @@ Response: `{ "success": true, "data": { "kapasitas_estimasi_kg": number, "kapasi
 
 ### GET /api/desa
 Role: semua role terautentikasi
+Query param opsional: `?komoditas_id=number`
 Response: `{ "success": true, "data": [ { "desa_id": number, "nama_desa": string, "latitude": number | null, "longitude": number | null, "skor_konsistensi": number, "kapasitas_estimasi_kg": number, "kapasitas_tervalidasi_kg": number } ] }`
-Catatan: Endpoint ini menyertakan kapasitas estimasi dan tervalidasi untuk setiap desa dalam satu response (menggunakan `getAllDesaCapacity` dari capacity-engine) untuk menghindari N+1 request di marketplace.
+Catatan: Endpoint ini menyertakan kapasitas estimasi dan tervalidasi untuk setiap desa dalam satu response (menggunakan `getAllDesaCapacity` dari capacity-engine) untuk menghindari N+1 request di marketplace. Jika `komoditas_id` diberikan, `kapasitas_estimasi_kg` dan `kapasitas_tervalidasi_kg` yang dikembalikan HANYA untuk komoditas tersebut, bukan agregat semua komoditas.
 
 ## Trust Score (Fitur Unggulan)
 

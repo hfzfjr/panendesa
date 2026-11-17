@@ -1,14 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Bell, Menu, X, LayoutDashboard, Inbox, Package, ShoppingCart, Users, Truck, FileText, Settings, HelpCircle } from "lucide-react";
+import { authStorage } from "@/lib/auth";
 
 export function KopdesNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const [user, setUser] = useState<{ nama?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const currentUser = authStorage.getUser();
+    setUser(currentUser);
+    setLoading(false);
+  }, []);
+
+  const getInitials = (name?: string) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   const menuLinks = [
     { name: "Dashboard", href: "/kopdes", icon: LayoutDashboard },
@@ -49,12 +63,12 @@ export function KopdesNavbar() {
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-neutral-50 rounded-full"></span>
           </Link>
-          <Link href="/kopdes/profil" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer">
-            <img
-              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=100&auto=format&fit=crop"
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
+          <Link href="/kopdes/profil" className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm ring-1 ring-gray-200 cursor-pointer bg-primary-dark/10 flex items-center justify-center">
+            {loading ? (
+              <div className="w-full h-full bg-gray-200 animate-pulse"></div>
+            ) : (
+              <span className="text-xs font-bold text-primary-dark">{getInitials(user?.nama)}</span>
+            )}
           </Link>
         </div>
       </header>

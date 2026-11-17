@@ -15,6 +15,7 @@ import economicImpactRouter from './api/routes/economicImpact';
 import komoditasRouter from './api/routes/komoditas';
 import usersRouter from './api/routes/users';
 import desaRouter from './api/routes/desa';
+import hargaAcuanRouter from './api/routes/hargaAcuan';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -47,6 +48,7 @@ app.use('/api/audit-log', auditLogRouter);
 app.use('/api/economic-impact', economicImpactRouter);
 app.use('/api/komoditas', komoditasRouter);
 app.use('/api/desa', desaRouter);
+app.use('/api/harga-acuan', hargaAcuanRouter);
 
 // Start server
 app.listen(PORT, () => {
