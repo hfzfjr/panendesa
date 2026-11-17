@@ -852,18 +852,26 @@ router.get('/petani/:petani_id', verifyToken, async (req: Request, res: Response
     // 4. Transform dan gabungkan data
     const result: any[] = [];
 
+    const unwrapRelation = <T>(rel: T | T[] | null | undefined): T | null => {
+      if (!rel) return null;
+      return Array.isArray(rel) ? (rel[0] ?? null) : rel;
+    };
+
     // Process order_allocation data (status: Berjalan)
     if (allocationData) {
       for (const item of allocationData) {
-        if (item.orders) {
+        const order = unwrapRelation<any>(item.orders);
+        if (order) {
+          const pembeli = unwrapRelation<any>(order.pembeli);
+          const komoditas = unwrapRelation<any>(order.komoditas);
           result.push({
             id: item.order_id,
-            pembeli_nama: item.orders.pembeli?.nama || 'Pembeli',
-            komoditas_nama: item.orders.komoditas?.nama_komoditas || 'Komoditas',
+            pembeli_nama: pembeli?.nama || 'Pembeli',
+            komoditas_nama: komoditas?.nama_komoditas || 'Komoditas',
             jumlah_kg: item.jumlah_dialokasikan_kg,
             total_harga: null, // Belum ada harga final untuk order yang sedang berjalan
             status: 'Berjalan',
-            tanggal: item.orders.created_at,
+            tanggal: order.created_at,
             grade: null
           });
         }
@@ -873,16 +881,20 @@ router.get('/petani/:petani_id', verifyToken, async (req: Request, res: Response
     // Process fair_share_distribution data (status: Selesai)
     if (fairShareData) {
       for (const item of fairShareData) {
-        if (item.orders) {
+        const order = unwrapRelation<any>(item.orders);
+        if (order) {
+          const pembeli = unwrapRelation<any>(order.pembeli);
+          const komoditas = unwrapRelation<any>(order.komoditas);
+          const grading = unwrapRelation<any>(item.intake_grading);
           result.push({
             id: item.order_id,
-            pembeli_nama: item.orders.pembeli?.nama || 'Pembeli',
-            komoditas_nama: item.orders.komoditas?.nama_komoditas || 'Komoditas',
+            pembeli_nama: pembeli?.nama || 'Pembeli',
+            komoditas_nama: komoditas?.nama_komoditas || 'Komoditas',
             jumlah_kg: item.kontribusi_kg,
             total_harga: item.jumlah_diterima,
             status: 'Selesai',
-            tanggal: item.orders.created_at,
-            grade: item.intake_grading?.grade || null
+            tanggal: order.created_at,
+            grade: grading?.grade || null
           });
         }
       }
